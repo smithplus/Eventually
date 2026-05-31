@@ -146,6 +146,51 @@ struct QuickAddPanel: View {
         nameFocused && !listSuggestions.isEmpty
     }
 
+    // MARK: - !date autocomplete
+
+    struct DateOption: Identifiable {
+        let id = UUID()
+        let label: String
+        let icon: String
+        let date: Date?     // nil = "Custom…" (opens the picker)
+    }
+
+    /// Partial after the last `!`, if the last word starts with `!`.
+    private var bangFragment: String? {
+        guard !draft.name.hasSuffix(" "),
+              let last = draft.name.split(separator: " ").last,
+              last.hasPrefix("!") else { return nil }
+        return String(last.dropFirst())
+    }
+
+    private var dateSuggestions: [DateOption] {
+        guard let frag = bangFragment else { return [] }
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+        func add(_ d: Int) -> Date { cal.date(byAdding: .day, value: d, to: today) ?? today }
+        func next(_ weekday: Int) -> Date {
+            var delta = weekday - cal.component(.weekday, from: today)
+            if delta <= 0 { delta += 7 }
+            return add(delta)
+        }
+        let all = [
+            DateOption(label: "Today", icon: "sun.max", date: today),
+            DateOption(label: "Tomorrow", icon: "sunrise", date: add(1)),
+            DateOption(label: "This weekend", icon: "beach.umbrella", date: next(7)),
+            DateOption(label: "Next week", icon: "calendar", date: next(2)),
+            DateOption(label: "In 1 week", icon: "calendar.badge.clock", date: add(7)),
+            DateOption(label: "Custom…", icon: "calendar.badge.plus", date: nil),
+        ]
+        if frag.isEmpty { return all }
+        return all.filter { $0.label.localizedCaseInsensitiveContains(frag) }
+    }
+
+    private var showDateSuggestions: Bool {
+        nameFocused && !dateSuggestions.isEmpty
+    }
+
+    private var anySuggestionsVisible: Bool { showListSuggestions || showDateSuggestions }
+
     private var effectiveDueDate: Date? {
         draft.dueDate ?? parsed.dueDate
     }
@@ -161,6 +206,8 @@ struct QuickAddPanel: View {
                 nameField
                 if showListSuggestions {
                     listSuggestionsDropdown
+                } else if showDateSuggestions {
+                    dateSuggestionsDropdown
                 } else {
                     descriptionField
                     headerControls
@@ -579,7 +626,7 @@ struct QuickAddPanel: View {
             .font(.system(size: 22, weight: .medium))
             .focused($nameFocused)
             .modifier(CommandKeyHandler(
-                suggestionsVisible: showListSuggestions,
+                suggestionsVisible: anySuggestionsVisible,
                 onShiftReturn: { notesFocused = true },
                 onUp: { moveSuggestion(-1) },
                 onDown: { moveSuggestion(1) }
@@ -590,6 +637,8 @@ struct QuickAddPanel: View {
                 // (Shift+Enter jumps to the description; ⌘Enter adds via the button.)
                 if showListSuggestions, listSuggestions.indices.contains(suggestionIndex) {
                     selectList(listSuggestions[suggestionIndex])
+                } else if showDateSuggestions, dateSuggestions.indices.contains(suggestionIndex) {
+                    selectDate(dateSuggestions[suggestionIndex])
                 } else {
                     submit()
                 }
@@ -597,7 +646,7 @@ struct QuickAddPanel: View {
     }
 
     private func moveSuggestion(_ delta: Int) {
-        let count = min(listSuggestions.count, 5)
+        let count = showListSuggestions ? min(listSuggestions.count, 5) : dateSuggestions.count
         guard count > 0 else { return }
         suggestionIndex = max(0, min(count - 1, suggestionIndex + delta))
     }
@@ -642,6 +691,58 @@ struct QuickAddPanel: View {
         draft.name = tokens.joined(separator: " ") + " "
         draft.listId = list.id
         nameFocused = true
+    }
+
+    // MARK: - !date autocomplete dropdown
+
+    private var dateSuggestionsDropdown: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(Array(dateSuggestions.enumerated()), id: \.element.id) { index, option in
+                Button {
+                    selectDate(option)
+                } label: {
+                    HStack(spacing: Theme.spaceS) {
+                        Image(systemName: option.icon)
+                            .font(.system(size: 12))
+                            .foregroundStyle(option.date == nil ? Theme.accent : .secondary)
+                            .frame(width: 16)
+                        Text(option.label).font(.system(size: 14))
+                        Spacer()
+                        if let d = option.date {
+                            Text(dueLabel(d)).font(.system(size: 12)).foregroundStyle(.tertiary)
+                        }
+                    }
+                    .padding(.horizontal, Theme.spaceM)
+                    .padding(.vertical, Theme.spaceS + 2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(index == suggestionIndex ? Theme.accentSoft : Color.clear)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .background(Color.primary.opacity(0.04))
+        .clipShape(RoundedRectangle(cornerRadius: Theme.radiusM, style: .continuous))
+        .padding(.top, Theme.spaceS)
+    }
+
+    /// Apply a date option: set the due date (or open the picker for Custom),
+    /// then strip the `!token` from the text since the date now shows as a chip.
+    private func selectDate(_ option: DateOption) {
+        removeBangToken()
+        if let date = option.date {
+            draft.dueDate = date
+        } else {
+            showDatePicker = true   // Custom…
+        }
+        nameFocused = true
+    }
+
+    private func removeBangToken() {
+        var tokens = draft.name.split(separator: " ", omittingEmptySubsequences: false).map(String.init)
+        if let last = tokens.last, last.hasPrefix("!") { tokens.removeLast() }
+        draft.name = tokens.joined(separator: " ")
+        if !draft.name.isEmpty && !draft.name.hasSuffix(" ") { draft.name += " " }
     }
 
     private func quickDateChip(_ label: String, date: Date?) -> some View {
