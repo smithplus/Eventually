@@ -344,27 +344,29 @@ struct QuickAddPanel: View {
 
     /// List selector chip — pick the target list by click (alternative to `#`).
     private var listSelectorChip: some View {
-        let active = draft.listId != nil || resolvedList != nil
         let warn = unmatchedListToken
-        let tint: Color = warn ? Theme.danger : (active ? Theme.accent : .secondary)
+        let color: Color = warn ? Theme.danger : tasksService.listColor(for: effectiveListId)
         return Menu {
             ForEach(tasksService.taskLists) { list in
                 Button(list.title) { draft.listId = list.id }
             }
         } label: {
-            HStack(spacing: 4) {
-                Image(systemName: warn ? "questionmark.circle" : "list.bullet").font(.system(size: 11))
+            HStack(spacing: 5) {
+                if warn {
+                    Image(systemName: "questionmark.circle").font(.system(size: 11))
+                } else {
+                    Circle().fill(color).frame(width: 7, height: 7)
+                }
                 Text(warn ? "#\(parsed.listName!)?" : currentListName)
                     .font(.system(size: 12, weight: .medium))
                     .lineLimit(1)
             }
             .padding(.horizontal, Theme.spaceM)
             .padding(.vertical, 5)
-            .background(Capsule().fill(warn ? Theme.danger.opacity(0.14) : (active ? Theme.accentSoft : Color.clear)))
-            .overlay(Capsule().strokeBorder(Color.primary.opacity(active || warn ? 0 : 0.15), lineWidth: 1))
+            .background(Capsule().fill(color.opacity(0.16)))
         }
         .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
-        .foregroundStyle(tint)
+        .foregroundStyle(color)
         .help(warn ? "No list named “\(parsed.listName!)” — pick one" : "Target list")
     }
 

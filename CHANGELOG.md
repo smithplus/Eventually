@@ -9,7 +9,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 > - **Popover** — the menu-bar dropdown opened with ⌘⇧T (compact, transient).
 > - **Command Window** — the floating window opened with ⌘⇧O (full input + tabs + task list). This is becoming the primary surface.
 
-### Added (latest — grouping)
+### Changed (latest)
+- **List chip styled like the date chip** — a filled capsule with the list's color dot + soft-tinted background, consistent with the due-date chip.
+- **Description field**: content-based height (1–8 lines) with Shift+Enter for newlines and Enter to add.
+- **Quick-add keyboard**: Tab accepts the highlighted `#`/`!` suggestion; arrow keys navigate it.
+- **`!date` autocomplete** dropdown (Today/Tomorrow/This weekend/Next week/In 1 week/Custom…).
+- **`#list` / `!date` tokens commit to colored chips on space** (cleaner note text).
+
+### Added (grouping)
 - **Group by date** in the sort menu: Overdue / Today / Tomorrow / This week / Later / No date, with semantic colors (red/orange/accent). Mutually exclusive with Group by list.
 - **Collapsible group headers** with a chevron and task count (both list and date groups), matching the TickTick-style reference. Click a header to collapse/expand.
 
