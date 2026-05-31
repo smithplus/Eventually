@@ -36,6 +36,21 @@ struct GTask: Identifiable, Codable, Hashable {
     var isCompleted: Bool { status == .completed }
     var isSubtask: Bool { parent != nil }
 
+    /// Google stores `due` as a date anchored to UTC midnight. This returns the
+    /// LOCAL midnight Date for that same calendar day, so comparisons against
+    /// the user's local "today" land in the right day bucket.
+    var dueDay: Date? {
+        guard let due else { return nil }
+        let comps = GTask.utcCalendar.dateComponents([.year, .month, .day], from: due)
+        return Calendar.current.date(from: comps)
+    }
+
+    static let utcCalendar: Calendar = {
+        var c = Calendar(identifier: .gregorian)
+        c.timeZone = TimeZone(identifier: "UTC")!
+        return c
+    }()
+
     enum TaskStatus: String, Codable {
         case needsAction = "needsAction"
         case completed = "completed"

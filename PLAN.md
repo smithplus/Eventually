@@ -60,27 +60,33 @@
 
 ## Roadmap decidido (jun 2026)
 
-> Features confirmadas por el usuario desde [ideas.md](ideas.md). Orden sugerido por valor/esfuerzo.
+> Features confirmadas por el usuario desde [ideas.md](ideas.md). **Cada pendiente tiene un GitHub issue para tracking.**
 
-### Listas para hacer (✅ factibles con la API)
-- [ ] **Navegación 100% teclado** (flechas, Enter para completar/expandir, acciones ⌘K)
-- [ ] **Agrupado por fecha** (Vencidas / Hoy / Mañana / Esta semana) — *distinto de subtareas*
-- [ ] **Vista de completadas** (toggle ver/ocultar)
-- [ ] **Vista calendario** (grilla mensual con tareas por fecha)
-- [ ] **Badge con contador** en el menu bar + toggle en Settings
-- [ ] **Launch at login** (SMAppService)
-- [ ] **Auto-refresh optimizado** (al abrir + intervalo, con backoff/debounce)
-- [ ] **Widget de escritorio real** (App Group + escritura de cache)
-- [ ] **Drag & drop** para reordenar dentro de una lista
-- [ ] **Crear / renombrar / borrar listas** desde la app
-- [ ] **Markdown en notas/descripciones** (render básico)
-- [ ] **Más idiomas/formatos de fecha** (ampliar parser ES/EN)
+### Pendientes (con issue) — ✅ factibles con la API
+- [ ] **Agrupado por fecha** (Vencidas/Hoy/Mañana/Esta semana) — #2 — *distinto de subtareas*
+- [ ] **Vista de completadas** — #3
+- [ ] **Navegación 100% teclado + acciones ⌘K** — #4
+- [ ] **Vista calendario** — #5
+- [ ] **Auto-refresh optimizado** — #8
+- [ ] **Widget de escritorio real** (App Group + cache) — #9
+- [ ] **Drag & drop** para reordenar — #10
+- [ ] **Crear / renombrar / borrar listas** — #11
+- [ ] **Markdown en notas** — #12
+- [ ] **Quick-capture (clipboard/snippets/aliases)** — #13
+
+### Pendientes con ⚠️ limitación de API (decisión de diseño)
+- [ ] **Recordatorios/notificaciones** — #6 — fecha sincroniza, hora sería local
+- [ ] **Recurrencia** — #7 — la API no la expone; habría que gestionarla local
 
 ### Hechas
-- [x] **Marcador `!fecha`** (`!4dias`, `!3d`, `!2semanas`, `!1mes`, `!manana`) — ES/EN, 18 tests
-- [x] Add Task UI expandida (Command Window estilo KiteTasks)
-- [x] Parsing de `#lista` y fechas naturales
-- [x] Subtareas, search, appearance, draft retention, resize/posición persistente
+- [x] **Badge con contador** en el menu bar + toggle en Settings
+- [x] **Launch at login** (SMAppService, real)
+- [x] **Sort** funciona en smart views; menú aplanado (1 click)
+- [x] **Fix timezone** de fechas (UTC) — hoy/vencidas/badge correctos
+- [x] **Marcador `!fecha`** (`!4dias`, `!2semanas`, `!1mes`, `!manana`) — ES/EN, 18 tests
+- [x] Add Task UI (Command Window), `#lista` + fechas naturales, subtareas
+- [x] Search, appearance (light/dark/system), draft retention (Raycast), retorno de foco
+- [x] Resize/posición persistente, agrupar por lista
 
 ### ⚠️ Con limitación de la API de Google Tasks (importante)
 - [ ] **Recordatorios / notificaciones**: la fecha sí sincroniza; **la hora NO** (la API solo guarda fecha). Una notificación con hora sería **local en la app**, no sincronizada con Google ni con el celular.

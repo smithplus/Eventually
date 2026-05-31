@@ -28,6 +28,8 @@ final class QuickAddWindowController {
     private let authService: AuthService
     private let tasksService: GoogleTasksService
     private let draft = QuickAddDraft()
+    /// The app that was frontmost before we opened, to return focus to it.
+    private var previousApp: NSRunningApplication?
 
     init(authService: AuthService, tasksService: GoogleTasksService) {
         self.authService = authService
@@ -36,17 +38,20 @@ final class QuickAddWindowController {
 
     func toggle() {
         if panel != nil {
-            close()
+            close(restoreFocus: true)
         } else {
             show()
         }
     }
 
     func show() {
+        // Remember who was active so we can hand focus back on close.
+        previousApp = NSWorkspace.shared.frontmostApplication
+
         // Make sure lists are loaded so the # selector works
         Task { await tasksService.fetchTaskLists() }
 
-        let content = QuickAddPanel(onClose: { [weak self] in self?.close() })
+        let content = QuickAddPanel(onClose: { [weak self] in self?.close(restoreFocus: true) })
             .environmentObject(authService)
             .environmentObject(tasksService)
             .environmentObject(draft)
@@ -117,7 +122,10 @@ final class QuickAddWindowController {
     /// Initial size: a tall window (saved or default), capped to the screen.
     private func initialSize() -> NSSize { clampedToScreen(savedSize()) }
 
-    func close() {
+    /// - Parameter restoreFocus: when true (Esc / ⌘⇧O), hand focus back to the
+    ///   app that was active before we opened. On click-outside it's false —
+    ///   that click already moved focus where the user wanted it.
+    func close(restoreFocus: Bool = false) {
         removeClickOutsideMonitor()
         if let panel {
             saveFrame(panel.frame)
@@ -125,6 +133,11 @@ final class QuickAddWindowController {
         }
         panel?.orderOut(nil)
         panel = nil
+
+        if restoreFocus, let previousApp, previousApp != .current {
+            previousApp.activate(options: [])
+        }
+        previousApp = nil
     }
 
     // MARK: - Frame persistence (position + size, survives restarts)

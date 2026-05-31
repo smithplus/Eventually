@@ -20,8 +20,14 @@ struct QuickAddPanel: View {
     @State private var panelFilter: GoogleTasksService.Selection = .today
 
     @AppStorage("defaultCommandView") private var defaultCommandView = "today"
+    @AppStorage("groupByList") private var groupByList = false
 
     @FocusState private var nameFocused: Bool
+
+    /// Group the aggregated smart views into per-list sections.
+    private var isGrouped: Bool {
+        groupByList && panelFilter.isSmart && !showSearch
+    }
 
     private var panelFilterListId: String? {
         if case .list(let id) = panelFilter { return id }
@@ -268,13 +274,16 @@ struct QuickAddPanel: View {
             .buttonStyle(.plain).foregroundStyle(.secondary)
 
             Menu {
-                Picker("Sort by", selection: Binding(
-                    get: { tasksService.sortOrder },
-                    set: { tasksService.sortOrder = $0 }
-                )) {
-                    ForEach(GoogleTasksService.SortOrder.allCases, id: \.self) { order in
-                        Label(order.label, systemImage: order.icon).tag(order)
+                ForEach(GoogleTasksService.SortOrder.allCases, id: \.self) { order in
+                    Button {
+                        tasksService.sortOrder = order
+                    } label: {
+                        Label(order.label, systemImage: tasksService.sortOrder == order ? "checkmark" : order.icon)
                     }
+                }
+                if panelFilter.isSmart {
+                    Divider()
+                    Toggle("Group by list", isOn: $groupByList)
                 }
             } label: {
                 Image(systemName: "arrow.up.arrow.down").font(.system(size: 12))
@@ -336,15 +345,39 @@ struct QuickAddPanel: View {
         } else {
             ScrollView {
                 LazyVStack(spacing: 0) {
-                    ForEach(displayRows) { ordered in
-                        TaskRowView(task: ordered.task, isChild: ordered.isChild, showListBadge: panelFilter.isSmart || showSearch)
-                        Divider().padding(.leading, ordered.isChild ? 64 : 40)
+                    if isGrouped {
+                        ForEach(tasksService.grouped(displayRows)) { group in
+                            sectionHeader(group.title, listId: group.listId)
+                            ForEach(group.rows) { taskRow($0, badge: false) }
+                        }
+                    } else {
+                        ForEach(displayRows) { taskRow($0, badge: panelFilter.isSmart || showSearch) }
                     }
                 }
                 .padding(.bottom, Theme.spaceS)
             }
             .frame(maxHeight: .infinity)
         }
+    }
+
+    private func taskRow(_ ordered: GoogleTasksService.OrderedTask, badge: Bool) -> some View {
+        VStack(spacing: 0) {
+            TaskRowView(task: ordered.task, isChild: ordered.isChild, showListBadge: badge)
+            Divider().padding(.leading, ordered.isChild ? 64 : 40)
+        }
+    }
+
+    private func sectionHeader(_ title: String, listId: String) -> some View {
+        HStack(spacing: Theme.spaceS) {
+            Circle().fill(tasksService.listColor(for: listId)).frame(width: 7, height: 7)
+            Text(title)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.secondary)
+            Spacer()
+        }
+        .padding(.horizontal, Theme.spaceM)
+        .padding(.top, Theme.spaceM)
+        .padding(.bottom, Theme.spaceXS)
     }
 
     // MARK: - Name

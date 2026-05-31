@@ -186,9 +186,9 @@ struct TaskRowView: View {
             }
 
             // Metadata row: due date + list badge
-            if task.due != nil || (showListBadge && task.listId != nil) {
+            if task.dueDay != nil || (showListBadge && task.listId != nil) {
                 HStack(spacing: 8) {
-                    if let due = task.due {
+                    if let due = task.dueDay {
                         dueBadge(due)
                     }
                     if showListBadge, let listId = task.listId {

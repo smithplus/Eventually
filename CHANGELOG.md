@@ -10,6 +10,16 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 > - **Command Window** — the floating window opened with ⌘⇧O (full input + tabs + task list). This is becoming the primary surface.
 
 ### Added (latest)
+- **Menu bar badge** with today's task count (toggle in Settings, now functional).
+- **Launch at login** wired via `SMAppService` (was a stub).
+- **Group tasks by list** in the smart views (Today/Upcoming/All), toggle in the sort menu.
+- **Focus return** (Spotlight-style): closing the Command Window with Esc / ⌘⇧O hands focus back to the app you were using.
+
+### Fixed (latest)
+- **Timezone bug**: Google stores due dates at UTC midnight; Today/Upcoming buckets, overdue coloring, and the badge now compute the correct local calendar day (was off by the UTC offset). Writes are UTC-anchored from the picked local day.
+- **Sort now works in the smart views** (was always due-sorted); the sort menu is flattened to one click (no "Sort by" submenu).
+
+### Added (earlier)
 - **Explicit `!` date markers** in quick-add: `!4dias`, `!3d`, `!2semanas`, `!1mes`, `!manana` (Spanish & English; time units like `!5min` resolve to today since the API is date-only). 18 parser unit tests.
 
 ### Changed (latest)

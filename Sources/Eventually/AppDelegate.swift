@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import KeyboardShortcuts
+import Combine
 
 @MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
@@ -12,6 +13,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     let shortcutManager = ShortcutManager()
     private lazy var quickAdd = QuickAddWindowController(authService: authService, tasksService: tasksService)
     private lazy var settings = SettingsWindowController(authService: authService, tasksService: tasksService, shortcutManager: shortcutManager)
+    private var cancellables = Set<AnyCancellable>()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         tasksService.authService = authService
@@ -24,6 +26,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         ) { [weak self] _ in
             Task { @MainActor in self?.settings.show() }
         }
+
+        // Keep the menu bar badge in sync with the task data and the setting.
+        tasksService.$tasks
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in self?.updateBadge() }
+            .store(in: &cancellables)
+        NotificationCenter.default.addObserver(
+            forName: .badgeSettingChanged, object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.updateBadge() }
+        }
+    }
+
+    /// Show today's task count (overdue + due today) next to the icon, if enabled.
+    private func updateBadge() {
+        guard let button = statusItem?.button else { return }
+        let enabled = UserDefaults.standard.object(forKey: DefaultsKey.showBadgeCount) as? Bool ?? true
+        let count = tasksService.rows(for: .today).count
+        button.title = (enabled && count > 0) ? " \(count)" : ""
     }
 
     // MARK: - Menu Bar
@@ -85,6 +106,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 // MARK: - Notification Names
 extension Notification.Name {
     static let openSettings = Notification.Name("openSettings")
+    static let badgeSettingChanged = Notification.Name("badgeSettingChanged")
 }
 
 // MARK: - Appearance

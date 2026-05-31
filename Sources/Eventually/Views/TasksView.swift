@@ -115,12 +115,11 @@ struct TasksView: View {
 
     private var sortMenu: some View {
         Menu {
-            Picker("Sort by", selection: Binding(
-                get: { tasksService.sortOrder },
-                set: { tasksService.sortOrder = $0 }
-            )) {
-                ForEach(GoogleTasksService.SortOrder.allCases, id: \.self) { order in
-                    Label(order.label, systemImage: order.icon).tag(order)
+            ForEach(GoogleTasksService.SortOrder.allCases, id: \.self) { order in
+                Button {
+                    tasksService.sortOrder = order
+                } label: {
+                    Label(order.label, systemImage: tasksService.sortOrder == order ? "checkmark" : order.icon)
                 }
             }
         } label: {

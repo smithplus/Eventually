@@ -89,7 +89,7 @@ class GoogleTasksService: ObservableObject {
         let all = tasks[listId] ?? []
 
         if sortOrder != .myOrder {
-            let sorted = all.sorted(by: comparator)
+            let sorted = all.sorted { comparator($0, $1, order: sortOrder) }
             return sorted.map { OrderedTask(task: $0, isChild: false) }
         }
 
@@ -113,16 +113,16 @@ class GoogleTasksService: ObservableObject {
     }
 
     /// Shared comparator for due/title sorts (tasks without a due date sort last).
-    private func comparator(_ a: GTask, _ b: GTask) -> Bool {
-        switch sortOrder {
+    private func comparator(_ a: GTask, _ b: GTask, order: SortOrder) -> Bool {
+        switch order {
         case .title:
             return a.title.localizedCaseInsensitiveCompare(b.title) == .orderedAscending
         case .dueDate:
-            switch (a.due, b.due) {
+            switch (a.dueDay, b.dueDay) {
             case let (x?, y?): return x < y
             case (nil, _?):    return false
             case (_?, nil):    return true
-            default:           return a.title < b.title
+            default:           return a.title.localizedCaseInsensitiveCompare(b.title) == .orderedAscending
             }
         case .myOrder:
             return (a.position ?? "") < (b.position ?? "")
@@ -136,10 +136,7 @@ class GoogleTasksService: ObservableObject {
 
         var body: [String: Any] = ["title": title]
         if let notes { body["notes"] = notes }
-        if let due {
-            let formatter = ISO8601DateFormatter()
-            body["due"] = formatter.string(from: due)
-        }
+        if let due { body["due"] = Self.encodeDue(due) }
 
         do {
             let data = try await post("/lists/\(listId)/tasks", body: body, token: token)
@@ -149,6 +146,18 @@ class GoogleTasksService: ObservableObject {
         } catch {
             self.error = error.localizedDescription
         }
+    }
+
+    /// Encode a picked calendar day as UTC-midnight RFC-3339 (Google's date-only
+    /// convention), taking the day from the user's LOCAL calendar so the day
+    /// the user picked is the day Google stores — regardless of timezone.
+    static func encodeDue(_ date: Date) -> String {
+        let comps = Calendar.current.dateComponents([.year, .month, .day], from: date)
+        let utcMidnight = GTask.utcCalendar.date(from: comps) ?? date
+        let f = ISO8601DateFormatter()
+        f.timeZone = TimeZone(identifier: "UTC")
+        f.formatOptions = [.withInternetDateTime]
+        return f.string(from: utcMidnight)
     }
 
     func completeTask(_ task: GTask) async {
@@ -202,15 +211,7 @@ class GoogleTasksService: ObservableObject {
               let token = await authService?.validAccessToken() else { return }
 
         var body: [String: Any] = [:]
-        if let date {
-            // Google stores date-only at midnight UTC
-            let f = ISO8601DateFormatter()
-            f.formatOptions = [.withInternetDateTime]
-            let utcMidnight = Calendar.current.startOfDay(for: date)
-            body["due"] = f.string(from: utcMidnight)
-        } else {
-            body["due"] = NSNull()
-        }
+        body["due"] = date.map(Self.encodeDue) ?? NSNull()
 
         do {
             let data = try await patch("/lists/\(listId)/tasks/\(task.id)", body: body, token: token)
@@ -309,6 +310,23 @@ class GoogleTasksService: ObservableObject {
         tasks.values.flatMap { $0 }
     }
 
+    /// A run of rows that belong to the same list, with its header info.
+    struct ListGroup: Identifiable {
+        let listId: String
+        let title: String
+        let rows: [OrderedTask]
+        var id: String { listId }
+    }
+
+    /// Group already-ordered rows by their list, preserving the list ordering.
+    func grouped(_ rows: [OrderedTask]) -> [ListGroup] {
+        let byList = Dictionary(grouping: rows) { $0.task.listId ?? "" }
+        return taskLists.compactMap { list in
+            guard let r = byList[list.id], !r.isEmpty else { return nil }
+            return ListGroup(listId: list.id, title: list.title, rows: r)
+        }
+    }
+
     /// Tasks across every list whose title or notes match `query`.
     func search(_ query: String) -> [OrderedTask] {
         let q = query.trimmingCharacters(in: .whitespaces)
@@ -331,24 +349,20 @@ class GoogleTasksService: ObservableObject {
             return smartRows { _ in true }
         case .today:
             let today = Calendar.current.startOfDay(for: Date())
-            let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today)!
-            return smartRows { due in due != nil && due! < tomorrow }   // overdue + today
+            let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today) ?? today
+            return smartRows { day in day != nil && day! < tomorrow }   // overdue + today
         case .upcoming:
-            return smartRows { due in due != nil }
+            return smartRows { day in day != nil }
         }
     }
 
-    /// Flat, due-sorted rows across all lists, filtered by a due-date predicate.
-    private func smartRows(_ includeDue: (Date?) -> Bool) -> [OrderedTask] {
-        let filtered = allTasks.filter { includeDue($0.due) }
-        let sorted = filtered.sorted { a, b in
-            switch (a.due, b.due) {
-            case let (x?, y?): return x < y
-            case (nil, _?):    return false
-            case (_?, nil):    return true
-            default:           return a.title < b.title
-            }
-        }
+    /// Flat rows across all lists, filtered by a (local) due-day predicate and
+    /// ordered by the active sort. `myOrder` isn't meaningful across lists, so it
+    /// falls back to due-date ordering for the smart views.
+    private func smartRows(_ includeDay: (Date?) -> Bool) -> [OrderedTask] {
+        let filtered = allTasks.filter { includeDay($0.dueDay) }
+        let order: SortOrder = (sortOrder == .myOrder) ? .dueDate : sortOrder
+        let sorted = filtered.sorted { comparator($0, $1, order: order) }
         return sorted.map { OrderedTask(task: $0, isChild: false) }
     }
 

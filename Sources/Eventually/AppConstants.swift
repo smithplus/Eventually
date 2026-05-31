@@ -11,6 +11,9 @@ enum DefaultsKey {
     static let panelY = "panelY"
     static let panelWidth = "panelWidth"
     static let panelHeight = "panelHeight"
+    static let launchAtLogin = "launchAtLogin"
+    static let showBadgeCount = "showBadgeCount"
+    static let groupByList = "groupByList"
 }
 
 /// App appearance preference, shared by the Settings picker and the applier.
