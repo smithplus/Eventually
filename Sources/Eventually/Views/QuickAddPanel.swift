@@ -272,8 +272,10 @@ struct QuickAddPanel: View {
             .textFieldStyle(.plain)
             .font(.system(size: 13))
             .foregroundStyle(.secondary)
-            .lineLimit(1...4)
+            .lineLimit(1...8)
             .focused($notesFocused)
+            // Enter adds the task; Shift+Enter inserts a line break.
+            .modifier(DescriptionKeyHandler(onEnter: { submit() }))
     }
 
     // MARK: - Header controls (date chips + list selector + add)
@@ -880,6 +882,23 @@ struct QuickAddPanel: View {
 /// - Shift+Return → jump to the description.
 /// - ↑/↓ → move the `#list` autocomplete selection (when visible).
 /// (Plain Return is handled by onSubmit; ⌘Return adds via the Add button.)
+/// In the description: Enter adds the task; Shift+Enter inserts a newline.
+private struct DescriptionKeyHandler: ViewModifier {
+    let onEnter: () -> Void
+    func body(content: Content) -> some View {
+        if #available(macOS 14.0, *) {
+            content.onKeyPress { press in
+                if press.key == .return, !press.modifiers.contains(.shift) {
+                    onEnter(); return .handled
+                }
+                return .ignored   // Shift+Return falls through → newline
+            }
+        } else {
+            content
+        }
+    }
+}
+
 private struct CommandKeyHandler: ViewModifier {
     let suggestionsVisible: Bool
     let onShiftReturn: () -> Void
