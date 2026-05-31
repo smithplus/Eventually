@@ -45,6 +45,7 @@ struct QuickAddPanel: View {
     @State private var showNewList = false
     @State private var newListText = ""
     @State private var collapsedGroups: Set<String> = []
+    @State private var suggestionIndex = 0
 
     /// Which tasks are shown below the input.
     @State private var panelFilter: GoogleTasksService.Selection = .today
@@ -577,16 +578,28 @@ struct QuickAddPanel: View {
             .textFieldStyle(.plain)
             .font(.system(size: 22, weight: .medium))
             .focused($nameFocused)
-            .modifier(ShiftReturnToNotes { notesFocused = true })
+            .modifier(CommandKeyHandler(
+                suggestionsVisible: showListSuggestions,
+                onShiftReturn: { notesFocused = true },
+                onUp: { moveSuggestion(-1) },
+                onDown: { moveSuggestion(1) }
+            ))
+            .onChange(of: draft.name) { _ in suggestionIndex = 0 }
             .onSubmit {
-                // Enter accepts the top autocomplete suggestion, else adds the task.
+                // Enter accepts the highlighted suggestion, else adds the task.
                 // (Shift+Enter jumps to the description; ⌘Enter adds via the button.)
-                if showListSuggestions, let first = listSuggestions.first {
-                    selectList(first)
+                if showListSuggestions, listSuggestions.indices.contains(suggestionIndex) {
+                    selectList(listSuggestions[suggestionIndex])
                 } else {
                     submit()
                 }
             }
+    }
+
+    private func moveSuggestion(_ delta: Int) {
+        let count = min(listSuggestions.count, 5)
+        guard count > 0 else { return }
+        suggestionIndex = max(0, min(count - 1, suggestionIndex + delta))
     }
 
     // MARK: - #list autocomplete dropdown
@@ -608,7 +621,7 @@ struct QuickAddPanel: View {
                     .padding(.horizontal, Theme.spaceM)
                     .padding(.vertical, Theme.spaceS + 2)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(index == 0 ? Theme.accentSoft : Color.clear)
+                    .background(index == suggestionIndex ? Theme.accentSoft : Color.clear)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -703,16 +716,27 @@ struct QuickAddPanel: View {
     }
 }
 
-/// Intercepts Shift+Return to jump from the title to the description field.
-/// (Plain Return adds the task; ⌘Return also adds via the Add button.)
-private struct ShiftReturnToNotes: ViewModifier {
-    let action: () -> Void
+/// Keyboard handling for the quick-add title field:
+/// - Shift+Return → jump to the description.
+/// - ↑/↓ → move the `#list` autocomplete selection (when visible).
+/// (Plain Return is handled by onSubmit; ⌘Return adds via the Add button.)
+private struct CommandKeyHandler: ViewModifier {
+    let suggestionsVisible: Bool
+    let onShiftReturn: () -> Void
+    let onUp: () -> Void
+    let onDown: () -> Void
+
     func body(content: Content) -> some View {
         if #available(macOS 14.0, *) {
             content.onKeyPress { press in
-                if press.key == .return && press.modifiers.contains(.shift) {
-                    action()
-                    return .handled
+                if press.key == .return, press.modifiers.contains(.shift) {
+                    onShiftReturn(); return .handled
+                }
+                if suggestionsVisible, press.key == .upArrow {
+                    onUp(); return .handled
+                }
+                if suggestionsVisible, press.key == .downArrow {
+                    onDown(); return .handled
                 }
                 return .ignored
             }
