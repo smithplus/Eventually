@@ -25,6 +25,9 @@ targets:
       - path: Sources/Eventually
     resources:
       - path: Resources
+    dependencies:
+      - package: KeyboardShortcuts
+        product: KeyboardShortcuts
     settings:
       base:
         PRODUCT_NAME: Eventually
@@ -47,6 +50,17 @@ targets:
     dependencies:
       - target: Eventually
 
+  EventuallyTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests
+      - path: Sources/Eventually/Services/QuickAddParser.swift
+    settings:
+      base:
+        SWIFT_VERSION: "5.9"
+        GENERATE_INFOPLIST_FILE: YES
+
 packages:
   KeyboardShortcuts:
     url: https://github.com/sindresorhus/KeyboardShortcuts
@@ -58,5 +72,8 @@ schemes:
       targets:
         Eventually: all
         EventuallyWidget: all
+    test:
+      targets:
+        - EventuallyTests
     run:
       config: Debug

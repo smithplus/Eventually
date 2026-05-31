@@ -23,17 +23,29 @@ class AuthService: NSObject, ObservableObject {
 
     private var codeVerifier: String?
     private var localServer: LocalCallbackServer?
+    private var activeObserver: NSObjectProtocol?
+    private var didReceiveCallback = false
 
     override init() {
         super.init()
         loadTokensFromKeychain()
     }
 
+    deinit {
+        if let observer = activeObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+    }
+
     // MARK: - Sign In
 
     func signIn() {
+        // Tear down any previous in-flight attempt so re-tapping restarts cleanly
+        cancelSignIn(resetLoading: false)
+
         isLoading = true
         error = nil
+        didReceiveCallback = false
 
         let verifier = generateCodeVerifier()
         codeVerifier = verifier
@@ -65,6 +77,7 @@ class AuthService: NSObject, ObservableObject {
         localServer?.start { [weak self] code in
             Task { @MainActor [weak self] in
                 guard let self else { return }
+                self.didReceiveCallback = true
                 self.localServer?.stop()
                 self.localServer = nil
 
@@ -79,8 +92,48 @@ class AuthService: NSObject, ObservableObject {
             }
         }
 
+        // If the user closes the browser tab without finishing, the loopback
+        // server never fires. Detect their return to the app and reset the
+        // spinner so they can retry, after a short grace for the token exchange.
+        observeReturnToApp()
+
         // Open Google login in default browser
         NSWorkspace.shared.open(url)
+    }
+
+    /// Watches for the app regaining focus mid-sign-in. If the user comes back
+    /// without having completed the flow, reset the loading state.
+    private func observeReturnToApp() {
+        if let observer = activeObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        activeObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self, self.isLoading else { return }
+                // Grace period: the callback may still be exchanging the code
+                try? await Task.sleep(nanoseconds: 1_500_000_000)
+                if self.isLoading && !self.didReceiveCallback {
+                    self.cancelSignIn(resetLoading: true)
+                }
+            }
+        }
+    }
+
+    /// Cancel an in-flight sign-in attempt and tear down its resources.
+    func cancelSignIn(resetLoading: Bool) {
+        localServer?.stop()
+        localServer = nil
+        if let observer = activeObserver {
+            NotificationCenter.default.removeObserver(observer)
+            activeObserver = nil
+        }
+        if resetLoading {
+            isLoading = false
+        }
     }
 
     func signOut() {
@@ -201,80 +254,76 @@ class AuthService: NSObject, ObservableObject {
     private func availablePort() -> Int {
         // Try ports in range, fall back to 8080
         for port in 8080...8180 {
-            let socket = socket(AF_INET, SOCK_STREAM, 0)
-            guard socket >= 0 else { continue }
+            let fd = Darwin.socket(AF_INET, SOCK_STREAM, 0)
+            guard fd >= 0 else { continue }
             var addr = sockaddr_in()
             addr.sin_family = sa_family_t(AF_INET)
             addr.sin_port = in_port_t(port).bigEndian
             addr.sin_addr.s_addr = INADDR_ANY
             let bound = withUnsafePointer(to: &addr) {
                 $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
-                    bind(socket, $0, socklen_t(MemoryLayout<sockaddr_in>.size))
+                    Darwin.bind(fd, $0, socklen_t(MemoryLayout<sockaddr_in>.size))
                 }
             }
-            close(socket)
+            Darwin.close(fd)
             if bound == 0 { return port }
         }
         return 8080
     }
 
-    // MARK: - Keychain
+    // MARK: - Token Storage
+    //
+    // Tokens are stored in a user-only-readable file (chmod 0600) under
+    // Application Support. This persists across rebuilds regardless of the
+    // app's code signature — unlike the Keychain, whose ACL is tied to the
+    // signing identity and re-prompts on every unsigned rebuild.
+    //
+    // The OAuth client secret is already embedded in the app binary, so a
+    // local refresh token adds little marginal risk. For a signed release
+    // build this can be swapped back to the Keychain.
 
-    private let keychainService = "app.tabella.Eventually"
+    private struct StoredTokens: Codable {
+        var accessToken: String?
+        var refreshToken: String?
+        var tokenExpiry: Double?
+        var userEmail: String?
+    }
+
+    private var tokenFileURL: URL {
+        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("Eventually", isDirectory: true)
+        try? FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
+        return base.appendingPathComponent("tokens.json")
+    }
 
     private func saveTokensToKeychain() {
-        if let t = accessToken  { saveToKeychain(key: "accessToken",  value: t) }
-        if let t = refreshToken { saveToKeychain(key: "refreshToken", value: t) }
-        if let e = tokenExpiry  { saveToKeychain(key: "tokenExpiry",  value: String(e.timeIntervalSince1970)) }
-        if let e = userEmail    { saveToKeychain(key: "userEmail",    value: e) }
+        let tokens = StoredTokens(
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+            tokenExpiry: tokenExpiry?.timeIntervalSince1970,
+            userEmail: userEmail
+        )
+        guard let data = try? JSONEncoder().encode(tokens) else { return }
+        try? data.write(to: tokenFileURL, options: [.atomic, .completeFileProtection])
+        // Restrict to owner read/write only
+        try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: tokenFileURL.path)
     }
 
     private func loadTokensFromKeychain() {
-        accessToken  = loadFromKeychain(key: "accessToken")
-        refreshToken = loadFromKeychain(key: "refreshToken")
-        userEmail    = loadFromKeychain(key: "userEmail")
-        if let s = loadFromKeychain(key: "tokenExpiry"), let t = Double(s) {
-            tokenExpiry = Date(timeIntervalSince1970: t)
+        guard let data = try? Data(contentsOf: tokenFileURL),
+              let tokens = try? JSONDecoder().decode(StoredTokens.self, from: data) else {
+            isAuthenticated = false
+            return
         }
+        accessToken = tokens.accessToken
+        refreshToken = tokens.refreshToken
+        userEmail = tokens.userEmail
+        if let t = tokens.tokenExpiry { tokenExpiry = Date(timeIntervalSince1970: t) }
         isAuthenticated = refreshToken != nil
     }
 
     private func deleteTokensFromKeychain() {
-        ["accessToken", "refreshToken", "tokenExpiry", "userEmail"].forEach { deleteFromKeychain(key: $0) }
-    }
-
-    private func saveToKeychain(key: String, value: String) {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: keychainService,
-            kSecAttrAccount as String: key,
-            kSecValueData as String: value.data(using: .utf8)!,
-        ]
-        SecItemDelete(query as CFDictionary)
-        SecItemAdd(query as CFDictionary, nil)
-    }
-
-    private func loadFromKeychain(key: String) -> String? {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: keychainService,
-            kSecAttrAccount as String: key,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne,
-        ]
-        var result: AnyObject?
-        SecItemCopyMatching(query as CFDictionary, &result)
-        guard let data = result as? Data else { return nil }
-        return String(data: data, encoding: .utf8)
-    }
-
-    private func deleteFromKeychain(key: String) {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: keychainService,
-            kSecAttrAccount as String: key,
-        ]
-        SecItemDelete(query as CFDictionary)
+        try? FileManager.default.removeItem(at: tokenFileURL)
     }
 }
 
@@ -328,13 +377,26 @@ final class LocalCallbackServer {
 
             // Send a success page back to the browser
             let html = """
-            <html><body style="font-family:system-ui;text-align:center;padding:60px;background:#1a1a1a;color:white">
-            <h2>✓ Signed in successfully</h2>
-            <p>You can close this tab and return to Eventually.</p>
-            <script>window.close()</script>
-            </body></html>
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+              <title>Eventually</title>
+            </head>
+            <body style="margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#1a1a1a;font-family:-apple-system,system-ui,sans-serif">
+              <div style="text-align:center">
+                <div style="width:64px;height:64px;margin:0 auto 24px;border-radius:16px;background:#F0A830;display:flex;align-items:center;justify-content:center">
+                  <span style="font-size:34px;color:#1a1a1a">&#10003;</span>
+                </div>
+                <h2 style="color:#fff;font-weight:600;margin:0 0 8px">Signed in successfully</h2>
+                <p style="color:#999;margin:0">You can close this tab and return to Eventually.</p>
+              </div>
+              <script>setTimeout(function(){window.close()},1200)</script>
+            </body>
+            </html>
             """
-            let response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: \(html.utf8.count)\r\nConnection: close\r\n\r\n\(html)"
+            let response = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: \(html.utf8.count)\r\nConnection: close\r\n\r\n\(html)"
             connection.send(content: response.data(using: .utf8), completion: .contentProcessed { _ in
                 connection.cancel()
             })

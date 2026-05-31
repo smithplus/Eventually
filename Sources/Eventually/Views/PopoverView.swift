@@ -13,7 +13,7 @@ struct PopoverView: View {
                 LoginView()
             }
         }
-        .frame(width: 360)
+        .frame(width: 400)
     }
 }
 

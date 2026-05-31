@@ -1,8 +1,8 @@
 import AppKit
 import SwiftUI
 import KeyboardShortcuts
-import Network
 
+@MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
     var popover: NSPopover?
@@ -10,11 +10,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     let authService = AuthService()
     let tasksService = GoogleTasksService()
     let shortcutManager = ShortcutManager()
+    private lazy var quickAdd = QuickAddWindowController(authService: authService, tasksService: tasksService)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        tasksService.authService = authService
         setupMenuBar()
         setupGlobalShortcuts()
-        tasksService.authService = authService
     }
 
     // MARK: - Menu Bar
@@ -35,7 +36,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             .environmentObject(shortcutManager)
 
         popover = NSPopover()
-        popover?.contentSize = NSSize(width: 360, height: 500)
+        popover?.contentSize = NSSize(width: 400, height: 640)
         popover?.behavior = .transient
         popover?.animates = true
         popover?.contentViewController = NSHostingController(rootView: popoverView)
@@ -48,6 +49,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             popover?.performClose(sender)
         } else {
             popover?.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            // Activate the app so the transient popover reliably detects
+            // outside clicks and dismisses itself.
+            NSApp.activate(ignoringOtherApps: true)
             popover?.contentViewController?.view.window?.makeKey()
 
             if focusAddTask {
@@ -63,8 +67,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self?.togglePopover(focusAddTask: false)
         }
 
+        // ⌘⇧O opens the floating quick-add panel (requires sign-in)
         KeyboardShortcuts.onKeyUp(for: .openAndAddTask) { [weak self] in
-            self?.togglePopover(focusAddTask: true)
+            guard let self else { return }
+            if self.authService.isAuthenticated {
+                self.quickAdd.toggle()
+            } else {
+                self.togglePopover(focusAddTask: false)
+            }
         }
     }
 }

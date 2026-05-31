@@ -25,14 +25,22 @@ struct SettingsView: View {
 struct GeneralSettingsTab: View {
     @AppStorage("launchAtLogin") private var launchAtLogin = false
     @AppStorage("showBadgeCount") private var showBadgeCount = true
+    @AppStorage("panelPosition") private var panelPosition = "center"
 
     var body: some View {
         Form {
             Toggle("Launch at login", isOn: $launchAtLogin)
-                .onChange(of: launchAtLogin) { _, value in
+                .onChange(of: launchAtLogin) { value in
                     LaunchAtLogin.set(value)
                 }
             Toggle("Show task count badge", isOn: $showBadgeCount)
+
+            Picker("Quick-add panel position:", selection: $panelPosition) {
+                Text("Left").tag("left")
+                Text("Center").tag("center")
+                Text("Right").tag("right")
+            }
+            .pickerStyle(.segmented)
         }
         .padding()
     }

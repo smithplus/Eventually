@@ -30,11 +30,12 @@ Eventually usa **tu cuenta de Google** para acceder a tus tareas. No necesitás 
 ## Instalación (desde código)
 
 ```bash
-git clone <repo>
-cd TaskBar
+git clone https://github.com/smithplus/Eventually.git
+cd Eventually
 brew install xcodegen
+cp Config.template.swift Sources/Eventually/Config.swift   # luego pegá tus credenciales
 xcodegen generate
-open TaskBar.xcodeproj
+open Eventually.xcodeproj
 ```
 
 En Xcode: seleccionar signing team → `Cmd+R`
@@ -52,13 +53,13 @@ Customizables en **Preferencias → Shortcuts**.
 
 ```
 Sources/
-├── TaskBar/
-│   ├── TaskBarApp.swift              Entry point
+├── Eventually/
+│   ├── EventuallyApp.swift           Entry point
 │   ├── AppDelegate.swift             Menu bar + shortcuts globales
 │   ├── ShortcutManager.swift         Definición de shortcuts
-│   ├── Config.swift                  Credenciales OAuth (no editar)
+│   ├── Config.swift                  Credenciales OAuth (git-ignored)
 │   ├── Models/
-│   │   └── TaskModels.swift          Structs Task, TaskList
+│   │   └── TaskModels.swift          Structs GTask, TaskList
 │   ├── Services/
 │   │   ├── AuthService.swift         OAuth 2.0 PKCE + servidor local + Keychain
 │   │   └── GoogleTasksService.swift  Google Tasks API (CRUD)
@@ -67,8 +68,8 @@ Sources/
 │       ├── TasksView.swift            Lista + agregar tarea
 │       ├── TaskRowView.swift          Fila con edición inline
 │       └── SettingsView.swift         Preferencias + shortcuts
-└── TaskBarWidget/
-    └── TaskBarWidget.swift            Widget WidgetKit (small + medium)
+└── EventuallyWidget/
+    └── EventuallyWidget.swift         Widget WidgetKit (small + medium)
 ```
 
 ## Dependencias

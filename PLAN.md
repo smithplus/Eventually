@@ -1,4 +1,4 @@
-# TaskBar — Plan de mejoras
+# Eventually — Plan de mejoras
 
 ## Add Task — UI expandida (inspirado en KiteTasks)
 

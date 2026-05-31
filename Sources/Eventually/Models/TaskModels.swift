@@ -19,7 +19,7 @@ struct TaskList: Identifiable, Codable, Hashable {
     }
 }
 
-struct Task: Identifiable, Codable, Hashable {
+struct GTask: Identifiable, Codable, Hashable {
     let id: String
     var title: String
     var notes: String?
@@ -28,7 +28,13 @@ struct Task: Identifiable, Codable, Hashable {
     var completed: Date?
     var listId: String?
 
+    /// Parent task id — present when this task is a subtask.
+    var parent: String?
+    /// Server-side ordering string within the list.
+    var position: String?
+
     var isCompleted: Bool { status == .completed }
+    var isSubtask: Bool { parent != nil }
 
     enum TaskStatus: String, Codable {
         case needsAction = "needsAction"
@@ -36,20 +42,23 @@ struct Task: Identifiable, Codable, Hashable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, title, notes, status, due, completed
+        case id, title, notes, status, due, completed, parent, position
     }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(String.self, forKey: .id)
-        title = try container.decode(String.self, forKey: .title)
+        // Google occasionally returns tasks with an empty/missing title
+        title = (try container.decodeIfPresent(String.self, forKey: .title)) ?? ""
         notes = try container.decodeIfPresent(String.self, forKey: .notes)
         status = try container.decode(TaskStatus.self, forKey: .status)
+        parent = try container.decodeIfPresent(String.self, forKey: .parent)
+        position = try container.decodeIfPresent(String.self, forKey: .position)
         if let dueString = try container.decodeIfPresent(String.self, forKey: .due) {
-            due = ISO8601DateFormatter().date(from: dueString)
+            due = GTask.parseDate(dueString)
         }
         if let completedString = try container.decodeIfPresent(String.self, forKey: .completed) {
-            completed = ISO8601DateFormatter().date(from: completedString)
+            completed = GTask.parseDate(completedString)
         }
     }
 
@@ -60,6 +69,15 @@ struct Task: Identifiable, Codable, Hashable {
         self.status = status
         self.due = due
     }
+
+    /// Google Tasks returns RFC-3339 with fractional seconds ("...T00:00:00.000Z").
+    /// The default ISO8601DateFormatter rejects fractional seconds, so try both.
+    static func parseDate(_ string: String) -> Date? {
+        let withFraction = ISO8601DateFormatter()
+        withFraction.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let d = withFraction.date(from: string) { return d }
+        return ISO8601DateFormatter().date(from: string)
+    }
 }
 
 struct TaskListResponse: Codable {
@@ -67,5 +85,5 @@ struct TaskListResponse: Codable {
 }
 
 struct TasksResponse: Codable {
-    let items: [Task]?
+    let items: [GTask]?
 }

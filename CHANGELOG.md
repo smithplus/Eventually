@@ -1,0 +1,53 @@
+# Changelog
+
+All notable changes to Eventually are documented here.
+Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
+
+## [Unreleased]
+
+### Added
+- **Smart views** in the menu bar popover: Today, Upcoming, All Tasks, plus each individual list.
+- **List badges** with stable per-list colors when viewing aggregated tasks.
+- **Sort options** (My order / Due date / Title) via the header sort menu.
+- **Per-task options** through a hover action row and right-click context menu:
+  - Edit due date (graphical date picker)
+  - Clear due date
+  - Add subtask (inline indented input)
+  - Move to list
+  - Delete
+- **Subtasks**: parent/child nesting parsed from the API `parent` field, rendered with an indent guide.
+- **Expandable task detail**: tap a task to reveal and edit its title and description inline.
+- **Quick-add panel** (⌘⇧O) redesigned into a full floating window:
+  - Header input with natural-language parsing (`#list` + Spanish/English dates)
+  - `#list` autocomplete dropdown (substring match, Enter accepts top result)
+  - Live date/list chips reflecting the parse
+  - List filter tabs (All + each list) with the task list below
+  - Stays open after adding so you can keep capturing
+  - Configurable position (Left / Center / Right) in Settings
+- **QuickAddParser** with natural-language date support (`hoy`/`today`, `mañana`/`tomorrow`, weekday names, accent-insensitive) — covered by 11 unit tests.
+- **Settings**: connected account email + Sign Out, customizable shortcuts, quick-add panel position.
+- **Design tokens** (`Theme`): warm amber accent, 8pt spacing grid, `Color(hex:)`.
+- Backspace on an empty new-subtask input cancels it.
+
+### Changed
+- **OAuth flow** rewritten to use a localhost loopback server (matches the "installed app" client type) instead of a custom URL scheme.
+- **Token storage** moved from Keychain to a user-only-readable file under Application Support, so sessions persist across unsigned rebuilds. (Revert to Keychain once the app is signed with a stable identity.)
+- HTTP layer now validates response status and surfaces Google API errors (e.g. "Tasks API not enabled") instead of silently showing "No tasks".
+- Date parsing handles RFC-3339 fractional seconds returned by the API.
+- Popover enlarged (400 wide, taller scroll) for a TickTick-like density.
+- Quick-add panel uses a custom `KeyablePanel` so a borderless window can accept keyboard input.
+- Renamed project, targets, bundle id, and all sources from `TaskBar` to `Eventually`.
+- Task model renamed `Task` → `GTask` to avoid colliding with Swift Concurrency's `Task`.
+
+### Fixed
+- Quick-add panel rendered blank/white after the redesign (caused by a `.titled` window style); reverted to borderless.
+- Quick-add panel not accepting keyboard input (borderless panel couldn't become key).
+- OAuth success page showed mojibake (`âœ"`) due to a missing UTF-8 charset header.
+- Sign-in spinner hung forever when the browser tab was closed without finishing; it now resets on return to the app.
+
+## [0.1.0] — Initial commit
+
+### Added
+- Native macOS menu bar app (Swift / SwiftUI / AppKit) for Google Tasks.
+- OAuth 2.0 with PKCE, Google Tasks CRUD, global keyboard shortcuts.
+- WidgetKit widget (small + medium).

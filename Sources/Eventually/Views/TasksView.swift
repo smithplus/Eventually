@@ -4,25 +4,52 @@ struct TasksView: View {
     @EnvironmentObject var tasksService: GoogleTasksService
     @EnvironmentObject var authService: AuthService
 
-    @State private var selectedListId: String?
+    @State private var selection: GoogleTasksService.Selection = .today
     @State private var showAddTask = false
-    @State private var addTaskFocused = false
     @State private var newTaskTitle = ""
     @FocusState private var isInputFocused: Bool
 
-    var currentListId: String? {
-        selectedListId ?? tasksService.taskLists.first?.id
+    /// The list a new task should be added to (smart views fall back to first list).
+    var targetListId: String? {
+        if case .list(let id) = selection { return id }
+        return tasksService.taskLists.first?.id
     }
 
-    var currentTasks: [Task] {
-        guard let listId = currentListId else { return [] }
-        return tasksService.tasks[listId] ?? []
+    /// Whether the current view aggregates multiple lists (→ show list badges).
+    var isSmartView: Bool {
+        if case .list = selection { return false }
+        return true
+    }
+
+    var currentTasks: [GoogleTasksService.OrderedTask] {
+        tasksService.rows(for: selection)
+    }
+
+    private var selectionTitle: String {
+        switch selection {
+        case .all:      return "All Tasks"
+        case .today:    return "Today"
+        case .upcoming: return "Upcoming"
+        case .list(let id): return tasksService.listTitle(for: id) ?? "My Tasks"
+        }
+    }
+
+    private var selectionIcon: String {
+        switch selection {
+        case .all:      return "tray.full"
+        case .today:    return "sun.max"
+        case .upcoming: return "calendar"
+        case .list:     return "list.bullet"
+        }
     }
 
     var body: some View {
         VStack(spacing: 0) {
             headerBar
             addTaskRow
+            if let error = tasksService.error {
+                errorBanner(error)
+            }
             Divider()
             taskContent
         }
@@ -35,38 +62,55 @@ struct TasksView: View {
         }
     }
 
+    private func errorBanner(_ message: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(Theme.danger)
+                .font(.system(size: 12))
+            Text(message)
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.danger.opacity(0.08))
+    }
+
     // MARK: - Header
 
     private var headerBar: some View {
         HStack(spacing: 8) {
-            Image(systemName: "checklist")
-                .foregroundStyle(.blue)
+            Image(systemName: selectionIcon)
+                .foregroundStyle(Theme.accent)
                 .font(.system(size: 14, weight: .semibold))
 
-            if tasksService.taskLists.isEmpty {
-                Text("My Tasks")
-                    .font(.system(size: 13, weight: .semibold))
-            } else {
-                Menu {
+            Menu {
+                Button { selection = .today } label: { Label("Today", systemImage: "sun.max") }
+                Button { selection = .upcoming } label: { Label("Upcoming", systemImage: "calendar") }
+                Button { selection = .all } label: { Label("All Tasks", systemImage: "tray.full") }
+                if !tasksService.taskLists.isEmpty {
+                    Divider()
                     ForEach(tasksService.taskLists) { list in
-                        Button(list.title) {
-                            selectedListId = list.id
-                        }
-                    }
-                } label: {
-                    HStack(spacing: 4) {
-                        Text(tasksService.taskLists.first(where: { $0.id == currentListId })?.title ?? "My Tasks")
-                            .font(.system(size: 13, weight: .semibold))
-                        Image(systemName: "chevron.down")
-                            .font(.system(size: 10))
-                            .foregroundStyle(.secondary)
+                        Button { selection = .list(list.id) } label: { Text(list.title) }
                     }
                 }
-                .menuStyle(.borderlessButton)
-                .fixedSize()
+            } label: {
+                HStack(spacing: 4) {
+                    Text(selectionTitle)
+                        .font(.system(size: 13, weight: .semibold))
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                }
             }
+            .menuStyle(.borderlessButton)
+            .fixedSize()
 
             Spacer()
+
+            sortMenu
 
             if tasksService.isLoading {
                 ProgressView().controlSize(.mini)
@@ -88,14 +132,35 @@ struct TasksView: View {
         .background(.background)
     }
 
+    private var sortMenu: some View {
+        Menu {
+            Picker("Sort by", selection: Binding(
+                get: { tasksService.sortOrder },
+                set: { tasksService.sortOrder = $0 }
+            )) {
+                ForEach(GoogleTasksService.SortOrder.allCases, id: \.self) { order in
+                    Label(order.label, systemImage: order.icon).tag(order)
+                }
+            }
+        } label: {
+            Image(systemName: "arrow.up.arrow.down")
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+    }
+
     private var settingsMenu: some View {
         Menu {
-            Button("Settings...") {
-                NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-            }
-            Divider()
-            Button("Sign Out") {
-                authService.signOut()
+            if let email = authService.userEmail {
+                Section(email) {
+                    Button("Settings...") { openSettings() }
+                    Button("Sign Out") { authService.signOut() }
+                }
+            } else {
+                Button("Settings...") { openSettings() }
             }
             Divider()
             Button("Quit Eventually") {
@@ -108,6 +173,16 @@ struct TasksView: View {
         }
         .menuStyle(.borderlessButton)
         .fixedSize()
+    }
+
+    /// Opens the Settings window (selector differs between macOS 13 and 14+).
+    private func openSettings() {
+        NSApp.activate(ignoringOtherApps: true)
+        if #available(macOS 14.0, *) {
+            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        } else {
+            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+        }
     }
 
     // MARK: - Add Task Row
@@ -170,14 +245,14 @@ struct TasksView: View {
         } else {
             ScrollView {
                 LazyVStack(spacing: 0) {
-                    ForEach(currentTasks) { task in
-                        TaskRowView(task: task)
-                        Divider().padding(.leading, 40)
+                    ForEach(currentTasks) { ordered in
+                        TaskRowView(task: ordered.task, isChild: ordered.isChild, showListBadge: isSmartView)
+                        Divider().padding(.leading, ordered.isChild ? 64 : 40)
                     }
                 }
                 .padding(.bottom, 8)
             }
-            .frame(maxHeight: 420)
+            .frame(minHeight: 200, maxHeight: 560)
         }
     }
 
@@ -190,14 +265,15 @@ struct TasksView: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
-        .frame(height: 120)
+        .frame(maxWidth: .infinity)
+        .frame(height: 320)
     }
 
     // MARK: - Actions
 
     private func submitNewTask() {
         let title = newTaskTitle.trimmingCharacters(in: .whitespaces)
-        guard !title.isEmpty, let listId = currentListId else { return }
+        guard !title.isEmpty, let listId = targetListId else { return }
         newTaskTitle = ""
         showAddTask = false
         Task {

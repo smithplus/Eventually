@@ -194,8 +194,14 @@ struct EventuallyWidget: Widget {
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: TasksProvider()) { entry in
-            EventuallyWidgetEntryView(entry: entry)
-                .containerBackground(.background, for: .widget)
+            if #available(macOS 14.0, *) {
+                EventuallyWidgetEntryView(entry: entry)
+                    .containerBackground(.background, for: .widget)
+            } else {
+                EventuallyWidgetEntryView(entry: entry)
+                    .padding()
+                    .background(Color(NSColor.windowBackgroundColor))
+            }
         }
         .configurationDisplayName("Eventually")
         .description("See your Google Tasks at a glance.")
