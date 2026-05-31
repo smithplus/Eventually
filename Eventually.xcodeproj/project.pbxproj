@@ -11,6 +11,7 @@
 		22D84C174F9DB1CC894B69A4 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B9392E107C5BF578B6FFB06 /* AppDelegate.swift */; };
 		399F66E6CB82002F57B8B231 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20565DAADB6235DC3B64A787 /* LoginView.swift */; };
 		3D3A0022DFB368013165FC91 /* QuickAddWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCB7C97EEC7AB129BF3A4E6C /* QuickAddWindowController.swift */; };
+		49E879DC0C13473232B06B83 /* MarkdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F6E049E999523995112CAF7 /* MarkdownView.swift */; };
 		52E924ED2F2AC997960E7B7D /* QuickAddPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6777E7409B02B8B37FE60F57 /* QuickAddPanel.swift */; };
 		70C38DC9266521F00548E4C7 /* ShortcutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9C036A8E5F3FC19ECEBDEA3 /* ShortcutManager.swift */; };
 		8139D84924D6DC7A43D2AB8D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09C022D34494F4FA32D62690 /* SettingsView.swift */; };
@@ -55,6 +56,7 @@
 		724F39E60C872F080A124F79 /* AppConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConstants.swift; sourceTree = "<group>"; };
 		74FFCA547C60B571E13CE40D /* TaskModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskModels.swift; sourceTree = "<group>"; };
 		7785FD9FC6FF4B5F94A887E3 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		7F6E049E999523995112CAF7 /* MarkdownView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownView.swift; sourceTree = "<group>"; };
 		81BD98CBF35A78F780484634 /* EventuallyWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventuallyWidget.swift; sourceTree = "<group>"; };
 		9BA7524689D0744501FC878D /* QuickAddParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAddParserTests.swift; sourceTree = "<group>"; };
 		A9C036A8E5F3FC19ECEBDEA3 /* ShortcutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutManager.swift; sourceTree = "<group>"; };
@@ -82,6 +84,7 @@
 			isa = PBXGroup;
 			children = (
 				20565DAADB6235DC3B64A787 /* LoginView.swift */,
+				7F6E049E999523995112CAF7 /* MarkdownView.swift */,
 				6777E7409B02B8B37FE60F57 /* QuickAddPanel.swift */,
 				09C022D34494F4FA32D62690 /* SettingsView.swift */,
 				2528313113D8A00B1D2BF5C3 /* TaskRowView.swift */,
@@ -283,6 +286,7 @@
 				F71288A3A4F4E0963F0473B1 /* EventuallyApp.swift in Sources */,
 				A4E71FAD9A46496658047D23 /* GoogleTasksService.swift in Sources */,
 				399F66E6CB82002F57B8B231 /* LoginView.swift in Sources */,
+				49E879DC0C13473232B06B83 /* MarkdownView.swift in Sources */,
 				52E924ED2F2AC997960E7B7D /* QuickAddPanel.swift in Sources */,
 				D467EFD19300B201DDD54E07 /* QuickAddParser.swift in Sources */,
 				3D3A0022DFB368013165FC91 /* QuickAddWindowController.swift in Sources */,

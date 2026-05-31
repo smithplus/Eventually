@@ -9,7 +9,9 @@ struct TaskRowView: View {
     @State private var isExpanded = false
     @State private var editTitle = ""
     @State private var editNotes = ""
+    @State private var editingNotes = false
     @FocusState private var isEditFocused: Bool
+    @FocusState private var isNotesFocused: Bool
     @State private var isHovering = false
 
     @State private var showDatePicker = false
@@ -210,25 +212,32 @@ struct TaskRowView: View {
                 .focused($isEditFocused)
                 .onSubmit { saveDetail() }
 
-            // Description / notes — multi-line editor (Enter = line break, markdown source)
+            // Description / notes — rendered markdown by default; tap to edit the source.
             HStack(alignment: .top, spacing: 6) {
                 Image(systemName: "text.alignleft")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .padding(.top, 4)
-                ZStack(alignment: .topLeading) {
-                    if editNotes.isEmpty {
-                        Text("Add description · markdown")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.tertiary)
-                            .padding(.top, 1)
-                            .allowsHitTesting(false)
-                    }
+                if editingNotes {
                     TextEditor(text: $editNotes)
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                         .scrollContentBackground(.hidden)
-                        .frame(minHeight: 36, maxHeight: 140)
+                        .frame(minHeight: 36, maxHeight: 180)
+                        .focused($isNotesFocused)
+                } else if editNotes.isEmpty {
+                    Text("Add description · markdown")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.tertiary)
+                        .padding(.vertical, 3)
+                        .onTapGesture { startEditingNotes() }
+                } else {
+                    MarkdownView(text: editNotes)
+                        .foregroundStyle(.secondary)
+                        .textSelection(.enabled)
+                        .padding(.vertical, 2)
+                        .contentShape(Rectangle())
+                        .onTapGesture { startEditingNotes() }
                 }
             }
 
@@ -253,6 +262,7 @@ struct TaskRowView: View {
 
                 Button("Done") { saveDetail() }
                     .buttonStyle(CapsuleButton())
+                    .keyboardShortcut(.return, modifiers: .command)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -315,8 +325,14 @@ struct TaskRowView: View {
     private func expand() {
         editTitle = task.title
         editNotes = task.notes ?? ""
+        editingNotes = false   // show rendered markdown first; tap to edit
         withAnimation(.easeOut(duration: 0.15)) { isExpanded = true }
         isEditFocused = true
+    }
+
+    private func startEditingNotes() {
+        editingNotes = true
+        isNotesFocused = true
     }
 
     private func saveDetail() {

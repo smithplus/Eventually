@@ -9,7 +9,15 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 > - **Popover** — the menu-bar dropdown opened with ⌘⇧T (compact, transient).
 > - **Command Window** — the floating window opened with ⌘⇧O (full input + tabs + task list). This is becoming the primary surface.
 
-### Changed (latest — single UI + refinement pass)
+### Added (latest — markdown & keyboard)
+- **Full markdown rendering** in the expanded task view (`MarkdownView`): headings (`#`/`##`/`###`), bullet lists, horizontal rules, plus inline bold/italic/links. The description shows rendered by default and switches to a raw editor on tap (click-to-edit).
+- **Keyboard in the quick-add input**: Shift+Enter jumps from the title to the description; ⌘Enter adds the task; Enter still adds (or accepts the `#` autocomplete).
+- **⌘Enter saves** in the expanded task editor (same as "Done").
+
+### Fixed (latest)
+- **List chip no longer false-warns**: an autocompleted `#📋Lectura` token now matches a list titled "📋 Lectura" (space-insensitive), and the warning chip is suppressed when a list is already selected.
+
+### Changed (single UI + refinement pass)
 - **Retired the Popover entirely.** Eventually is now a single surface: the Command Window. Sign-in happens inside it (`CommandRoot` shows `LoginView` when signed out). Deleted `TasksView`; renamed `PopoverView.swift` → `LoginView.swift`.
 - **Menu bar icon is optional** — new Settings toggle "Show menu bar icon". With it hidden the ⌘⇧O shortcut still opens the Command Window.
 

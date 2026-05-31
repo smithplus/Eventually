@@ -52,6 +52,7 @@ struct QuickAddPanel: View {
     @AppStorage("groupByList") private var groupByList = false
 
     @FocusState private var nameFocused: Bool
+    @FocusState private var notesFocused: Bool
 
     /// Group the aggregated smart views into per-list sections.
     private var isGrouped: Bool {
@@ -89,11 +90,15 @@ struct QuickAddPanel: View {
         QuickAddParser.parse(draft.name)
     }
 
-    /// The list resolved from a `#token`, if it matches a real list. Uses the
-    /// same substring matching as the autocomplete dropdown for consistency.
+    /// The list resolved from a `#token`, if it matches a real list. Compares
+    /// ignoring spaces so an autocompleted token like `#📋Lectura` still matches
+    /// a list titled "📋 Lectura".
     private var resolvedList: TaskList? {
         guard let name = parsed.listName, !name.isEmpty else { return nil }
-        return tasksService.taskLists.first { $0.title.localizedCaseInsensitiveContains(name) }
+        let needle = name.replacingOccurrences(of: " ", with: "").lowercased()
+        return tasksService.taskLists.first {
+            $0.title.replacingOccurrences(of: " ", with: "").lowercased().contains(needle)
+        }
     }
 
     /// A `#token` in the text is the most recent intent, so it wins over a
@@ -102,9 +107,11 @@ struct QuickAddPanel: View {
         resolvedList?.id ?? draft.listId ?? panelFilterListId ?? tasksService.taskLists.first?.id
     }
 
-    /// True when the user typed a `#name` that matches no list.
+    /// True when the user typed a `#name` that matches no list AND hasn't picked
+    /// one via the chip (so we don't warn when the list is actually set).
     private var unmatchedListToken: Bool {
-        parsed.listName != nil && !parsed.listName!.isEmpty && resolvedList == nil
+        guard let name = parsed.listName, !name.isEmpty else { return false }
+        return resolvedList == nil && draft.listId == nil
     }
 
     // MARK: - #list autocomplete
@@ -207,6 +214,7 @@ struct QuickAddPanel: View {
             .font(.system(size: 13))
             .foregroundStyle(.secondary)
             .lineLimit(1...4)
+            .focused($notesFocused)
     }
 
     // MARK: - Header controls (date chips + list selector + add)
@@ -522,8 +530,10 @@ struct QuickAddPanel: View {
             .textFieldStyle(.plain)
             .font(.system(size: 22, weight: .medium))
             .focused($nameFocused)
+            .modifier(ShiftReturnToNotes { notesFocused = true })
             .onSubmit {
-                // Enter accepts the top autocomplete suggestion, else adds the task
+                // Enter accepts the top autocomplete suggestion, else adds the task.
+                // (Shift+Enter jumps to the description; ⌘Enter adds via the button.)
                 if showListSuggestions, let first = listSuggestions.first {
                     selectList(first)
                 } else {
@@ -643,5 +653,24 @@ struct QuickAddPanel: View {
         let days = Calendar.current.dateComponents([.day], from: Date(), to: date).day ?? 0
         f.dateFormat = abs(days) < 7 ? "EEEE" : "MMM d"
         return f.string(from: date)
+    }
+}
+
+/// Intercepts Shift+Return to jump from the title to the description field.
+/// (Plain Return adds the task; ⌘Return also adds via the Add button.)
+private struct ShiftReturnToNotes: ViewModifier {
+    let action: () -> Void
+    func body(content: Content) -> some View {
+        if #available(macOS 14.0, *) {
+            content.onKeyPress { press in
+                if press.key == .return && press.modifiers.contains(.shift) {
+                    action()
+                    return .handled
+                }
+                return .ignored
+            }
+        } else {
+            content
+        }
     }
 }
