@@ -41,10 +41,6 @@ struct TasksView: View {
         .task {
             await tasksService.fetchTaskLists()
         }
-        .onReceive(NotificationCenter.default.publisher(for: .focusAddTask)) { _ in
-            showAddTask = true
-            isInputFocused = true
-        }
     }
 
     private func errorBanner(_ message: String) -> some View {

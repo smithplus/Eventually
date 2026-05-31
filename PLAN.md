@@ -60,6 +60,8 @@
 
 ## Backlog
 
+> Menú ampliado de ideas (TickTick/Raycast/similares, con viabilidad y esfuerzo): ver [ideas.md](ideas.md).
+
 - [ ] **Multi-profile + multi-provider** (ver sección arriba) — Google Tasks + Linear + TickTick
 - [x] Add Task UI expandida (panel flotante estilo KiteTasks)
 - [x] Parsing de `#lista` y fechas naturales en el campo de nombre

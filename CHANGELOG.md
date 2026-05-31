@@ -9,6 +9,10 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 > - **Popover** — the menu-bar dropdown opened with ⌘⇧T (compact, transient).
 > - **Command Window** — the floating window opened with ⌘⇧O (full input + tabs + task list). This is becoming the primary surface.
 
+### Changed (latest)
+- **Retired the Popover as a task surface** — the menu bar icon and the single global shortcut (⌘⇧O) now open the Command Window. The popover is kept only for sign-in. Settings shows one shortcut ("Open Command Window").
+- **Nicer date picker**: accent-tinted graphical calendar in a framed popover with Clear / Done actions.
+
 ### Added
 - **Search** across all lists from the Command Window (magnifying-glass toggle; Esc closes search first).
 - **Appearance** setting: System / Light / Dark, applied app-wide.

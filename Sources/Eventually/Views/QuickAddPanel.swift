@@ -148,13 +148,8 @@ struct QuickAddPanel: View {
             }
             .buttonStyle(.plain)
             .background(Capsule().strokeBorder(Color.primary.opacity(0.15), lineWidth: 1))
-            .popover(isPresented: $showDatePicker) {
-                DatePicker("Due date", selection: Binding(
-                    get: { draft.dueDate ?? Date() },
-                    set: { draft.dueDate = Calendar.current.startOfDay(for: $0) }
-                ), displayedComponents: .date)
-                .datePickerStyle(.graphical)
-                .padding()
+            .popover(isPresented: $showDatePicker, arrowEdge: .bottom) {
+                datePickerPopover
             }
 
             if let due = effectiveDueDate {
@@ -168,6 +163,35 @@ struct QuickAddPanel: View {
                 .disabled(!canSubmit)
                 .keyboardShortcut(.return, modifiers: .command)
         }
+    }
+
+    // MARK: - Date picker popover
+
+    private var datePickerPopover: some View {
+        VStack(alignment: .leading, spacing: Theme.spaceS) {
+            DatePicker("", selection: Binding(
+                get: { draft.dueDate ?? Date() },
+                set: { draft.dueDate = Calendar.current.startOfDay(for: $0) }
+            ), displayedComponents: .date)
+            .datePickerStyle(.graphical)
+            .labelsHidden()
+            .tint(Theme.accent)
+
+            Divider()
+
+            HStack {
+                if draft.dueDate != nil {
+                    Button("Clear") { draft.dueDate = nil; showDatePicker = false }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(Theme.danger)
+                }
+                Spacer()
+                Button("Done") { showDatePicker = false }
+                    .buttonStyle(CapsuleButton())
+            }
+        }
+        .padding(Theme.spaceM)
+        .frame(width: 280)
     }
 
     // MARK: - Filter toolbar (smart views + lists, with controls on the right)

@@ -34,62 +34,56 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if let button = statusItem?.button {
             button.image = NSImage(systemSymbolName: "checklist", accessibilityDescription: "Eventually")
             button.image?.isTemplate = true
-            button.action = #selector(togglePopover)
+            button.action = #selector(openPrimary)
             button.target = self
         }
 
+        // The popover now serves a single purpose: signing in. Once authed,
+        // everything happens in the Command Window.
         let popoverView = PopoverView()
             .environmentObject(authService)
             .environmentObject(tasksService)
             .environmentObject(shortcutManager)
 
         popover = NSPopover()
-        popover?.contentSize = NSSize(width: 400, height: 640)
+        popover?.contentSize = NSSize(width: 360, height: 320)
         popover?.behavior = .transient
         popover?.animates = true
         popover?.contentViewController = NSHostingController(rootView: popoverView)
     }
 
-    @objc func togglePopover(_ sender: AnyObject? = nil, focusAddTask: Bool = false) {
-        guard let button = statusItem?.button else { return }
+    /// Single entry point: the Command Window when signed in, the login
+    /// popover otherwise. Wired to the menu bar icon and the global shortcut.
+    @objc func openPrimary() {
+        if authService.isAuthenticated {
+            quickAdd.toggle()
+        } else {
+            showLoginPopover()
+        }
+    }
 
+    private func showLoginPopover() {
+        guard let button = statusItem?.button else { return }
         if popover?.isShown == true {
-            popover?.performClose(sender)
+            popover?.performClose(nil)
         } else {
             popover?.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-            // Activate the app so the transient popover reliably detects
-            // outside clicks and dismisses itself.
             NSApp.activate(ignoringOtherApps: true)
             popover?.contentViewController?.view.window?.makeKey()
-
-            if focusAddTask {
-                NotificationCenter.default.post(name: .focusAddTask, object: nil)
-            }
         }
     }
 
     // MARK: - Global Shortcuts
 
     private func setupGlobalShortcuts() {
-        KeyboardShortcuts.onKeyUp(for: .openEventually) { [weak self] in
-            self?.togglePopover(focusAddTask: false)
-        }
-
-        // ⌘⇧O opens the floating quick-add panel (requires sign-in)
-        KeyboardShortcuts.onKeyUp(for: .openAndAddTask) { [weak self] in
-            guard let self else { return }
-            if self.authService.isAuthenticated {
-                self.quickAdd.toggle()
-            } else {
-                self.togglePopover(focusAddTask: false)
-            }
+        KeyboardShortcuts.onKeyUp(for: .openCommandWindow) { [weak self] in
+            self?.openPrimary()
         }
     }
 }
 
 // MARK: - Notification Names
 extension Notification.Name {
-    static let focusAddTask = Notification.Name("focusAddTask")
     static let openSettings = Notification.Name("openSettings")
 }
 

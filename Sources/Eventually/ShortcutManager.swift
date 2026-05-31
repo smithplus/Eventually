@@ -2,8 +2,8 @@ import KeyboardShortcuts
 import SwiftUI
 
 extension KeyboardShortcuts.Name {
-    static let openEventually = Self("openEventually", default: .init(.t, modifiers: [.command, .shift]))
-    static let openAndAddTask = Self("openAndAddTask", default: .init(.o, modifiers: [.command, .shift]))
+    /// The single global shortcut: opens the Command Window (⌘⇧O by default).
+    static let openCommandWindow = Self("openAndAddTask", default: .init(.o, modifiers: [.command, .shift]))
 }
 
 class ShortcutManager: ObservableObject {

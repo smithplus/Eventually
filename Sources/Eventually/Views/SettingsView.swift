@@ -72,8 +72,7 @@ struct GeneralSettingsTab: View {
 struct ShortcutsSettingsTab: View {
     var body: some View {
         Form {
-            KeyboardShortcuts.Recorder("Open Eventually:", name: .openEventually)
-            KeyboardShortcuts.Recorder("Open & add task:", name: .openAndAddTask)
+            KeyboardShortcuts.Recorder("Open Command Window:", name: .openCommandWindow)
         }
         .padding()
     }
