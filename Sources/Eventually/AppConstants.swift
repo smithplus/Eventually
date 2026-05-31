@@ -14,6 +14,7 @@ enum DefaultsKey {
     static let launchAtLogin = "launchAtLogin"
     static let showBadgeCount = "showBadgeCount"
     static let groupByList = "groupByList"
+    static let groupByDate = "groupByDate"
     static let autoRefreshMinutes = "autoRefreshMinutes"
     static let listOrder = "listOrder"
     static let sortOrder = "sortOrder"

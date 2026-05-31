@@ -385,6 +385,47 @@ class GoogleTasksService: ObservableObject {
         var id: String { listId }
     }
 
+    /// A run of rows sharing a date bucket (Overdue/Today/…).
+    struct DateGroup: Identifiable {
+        let key: String
+        let title: String
+        let rows: [OrderedTask]
+        var id: String { key }
+    }
+
+    /// Group already-ordered rows into date buckets: Overdue, Today, Tomorrow,
+    /// This week, Later, No date — in that fixed order.
+    func groupedByDate(_ rows: [OrderedTask]) -> [DateGroup] {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+        let tomorrow = cal.date(byAdding: .day, value: 1, to: today) ?? today
+        let weekEnd = cal.date(byAdding: .day, value: 7, to: today) ?? today
+
+        var buckets: [String: [OrderedTask]] = [:]
+        for row in rows {
+            let key: String
+            if let day = row.task.dueDay {
+                if day < today { key = "overdue" }
+                else if day == today { key = "today" }
+                else if day == tomorrow { key = "tomorrow" }
+                else if day < weekEnd { key = "week" }
+                else { key = "later" }
+            } else {
+                key = "none"
+            }
+            buckets[key, default: []].append(row)
+        }
+
+        let order: [(String, String)] = [
+            ("overdue", "Overdue"), ("today", "Today"), ("tomorrow", "Tomorrow"),
+            ("week", "This week"), ("later", "Later"), ("none", "No date"),
+        ]
+        return order.compactMap { key, title in
+            guard let r = buckets[key], !r.isEmpty else { return nil }
+            return DateGroup(key: key, title: title, rows: r)
+        }
+    }
+
     /// Group already-ordered rows by their list, preserving the list ordering.
     func grouped(_ rows: [OrderedTask]) -> [ListGroup] {
         let byList = Dictionary(grouping: rows) { $0.task.listId ?? "" }

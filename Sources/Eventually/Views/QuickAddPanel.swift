@@ -44,6 +44,7 @@ struct QuickAddPanel: View {
     @State private var renameText = ""
     @State private var showNewList = false
     @State private var newListText = ""
+    @State private var collapsedGroups: Set<String> = []
 
     /// Which tasks are shown below the input.
     @State private var panelFilter: GoogleTasksService.Selection = .today
@@ -417,10 +418,17 @@ struct QuickAddPanel: View {
                         Label(order.label, systemImage: tasksService.sortOrder == order ? "checkmark" : order.icon)
                     }
                 }
+                Divider()
+                Button {
+                    groupByDate.toggle()
+                    if groupByDate { groupByList = false }
+                } label: {
+                    Label("Group by date", systemImage: groupByDate ? "checkmark" : "calendar")
+                }
                 if panelFilter.isSmart {
-                    Divider()
                     Button {
                         groupByList.toggle()
+                        if groupByList { groupByDate = false }
                     } label: {
                         Label("Group by list", systemImage: groupByList ? "checkmark" : "rectangle.3.group")
                     }
@@ -482,10 +490,22 @@ struct QuickAddPanel: View {
         } else {
             ScrollView {
                 LazyVStack(spacing: 0) {
-                    if isGrouped {
+                    if isGroupedByDate {
+                        ForEach(tasksService.groupedByDate(displayRows)) { group in
+                            groupHeader(title: group.title, color: dateGroupColor(group.key),
+                                        count: group.rows.count, key: "date:" + group.key)
+                            if !collapsedGroups.contains("date:" + group.key) {
+                                ForEach(group.rows) { taskRow($0, badge: panelFilter.isSmart || showSearch) }
+                            }
+                        }
+                    } else if isGroupedByList {
                         ForEach(tasksService.grouped(displayRows)) { group in
-                            sectionHeader(group.title, listId: group.listId)
-                            ForEach(group.rows) { taskRow($0, badge: false) }
+                            groupHeader(title: group.title, color: tasksService.listColor(for: group.listId),
+                                        count: group.rows.count, key: group.listId,
+                                        list: tasksService.taskLists.first { $0.id == group.listId })
+                            if !collapsedGroups.contains(group.listId) {
+                                ForEach(group.rows) { taskRow($0, badge: false) }
+                            }
                         }
                     } else {
                         ForEach(displayRows) { taskRow($0, badge: panelFilter.isSmart || showSearch) }
@@ -504,22 +524,43 @@ struct QuickAddPanel: View {
         }
     }
 
-    private func sectionHeader(_ title: String, listId: String) -> some View {
-        HStack(spacing: Theme.spaceS) {
-            Circle().fill(tasksService.listColor(for: listId)).frame(width: 7, height: 7)
-            Text(title)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.secondary)
-            Spacer()
-        }
-        .padding(.horizontal, Theme.spaceM)
-        .padding(.top, Theme.spaceM)
-        .padding(.bottom, Theme.spaceXS)
-        .contentShape(Rectangle())
-        .contextMenu {
-            if let list = tasksService.taskLists.first(where: { $0.id == listId }) {
-                listMenu(list)
+    /// Collapsible section header (used by both list and date grouping).
+    private func groupHeader(title: String, color: Color, count: Int, key: String, list: TaskList? = nil) -> some View {
+        let collapsed = collapsedGroups.contains(key)
+        return Button {
+            if collapsed { collapsedGroups.remove(key) } else { collapsedGroups.insert(key) }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: collapsed ? "chevron.right" : "chevron.down")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 10)
+                Circle().fill(color).frame(width: 7, height: 7)
+                Text(title)
+                    .font(.system(size: 13, weight: .semibold))
+                Text("\(count)")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                Spacer()
             }
+            .padding(.horizontal, Theme.spaceM)
+            .padding(.top, Theme.spaceM)
+            .padding(.bottom, Theme.spaceXS)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .contextMenu {
+            if let list { listMenu(list) }
+        }
+    }
+
+    /// Semantic color for a date bucket.
+    private func dateGroupColor(_ key: String) -> Color {
+        switch key {
+        case "overdue":  return Theme.danger
+        case "today":    return Theme.dateChip
+        case "tomorrow": return Theme.accent
+        default:         return .secondary
         }
     }
 

@@ -9,7 +9,11 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 > - **Popover** — the menu-bar dropdown opened with ⌘⇧T (compact, transient).
 > - **Command Window** — the floating window opened with ⌘⇧O (full input + tabs + task list). This is becoming the primary surface.
 
-### Added (latest — markdown & keyboard)
+### Added (latest — grouping)
+- **Group by date** in the sort menu: Overdue / Today / Tomorrow / This week / Later / No date, with semantic colors (red/orange/accent). Mutually exclusive with Group by list.
+- **Collapsible group headers** with a chevron and task count (both list and date groups), matching the TickTick-style reference. Click a header to collapse/expand.
+
+### Added (markdown & keyboard)
 - **Full markdown rendering** in the expanded task view (`MarkdownView`): headings (`#`/`##`/`###`), bullet lists, horizontal rules, plus inline bold/italic/links. The description shows rendered by default and switches to a raw editor on tap (click-to-edit).
 - **Keyboard in the quick-add input**: Shift+Enter jumps from the title to the description; ⌘Enter adds the task; Enter still adds (or accepts the `#` autocomplete).
 - **⌘Enter saves** in the expanded task editor (same as "Done").
