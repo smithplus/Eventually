@@ -9,7 +9,11 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 > - **Popover** — the menu-bar dropdown opened with ⌘⇧T (compact, transient).
 > - **Command Window** — the floating window opened with ⌘⇧O (full input + tabs + task list). This is becoming the primary surface.
 
+### Added (latest)
+- **Explicit `!` date markers** in quick-add: `!4dias`, `!3d`, `!2semanas`, `!1mes`, `!manana` (Spanish & English; time units like `!5min` resolve to today since the API is date-only). 18 parser unit tests.
+
 ### Changed (latest)
+- **Compact date picker** — the popover is now just the accent-tinted calendar; picking a day closes it (no extra chrome).
 - **Retired the Popover as a task surface** — the menu bar icon and the single global shortcut (⌘⇧O) now open the Command Window. The popover is kept only for sign-in. Settings shows one shortcut ("Open Command Window").
 - **Nicer date picker**: accent-tinted graphical calendar in a framed popover with Clear / Done actions.
 

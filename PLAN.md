@@ -58,17 +58,34 @@
 
 ---
 
-## Backlog
+## Roadmap decidido (jun 2026)
 
-> Menú ampliado de ideas (TickTick/Raycast/similares, con viabilidad y esfuerzo): ver [ideas.md](ideas.md).
+> Features confirmadas por el usuario desde [ideas.md](ideas.md). Orden sugerido por valor/esfuerzo.
 
-- [ ] **Multi-profile + multi-provider** (ver sección arriba) — Google Tasks + Linear + TickTick
-- [x] Add Task UI expandida (panel flotante estilo KiteTasks)
-- [x] Parsing de `#lista` y fechas naturales en el campo de nombre
-- [x] Subtareas
-- [ ] Launch at login (SMAppService)
-- [ ] Notificaciones locales para tareas vencidas
-- [ ] Badge con contador de tareas en el icono del menu bar
-- [ ] Soporte drag & drop para reordenar tareas
-- [ ] Agrupado por fecha (Vencidas/Hoy/Mañana/Esta semana) estilo TickTick
-- [ ] Wire del widget de escritorio (App Group + escritura de cache)
+### Listas para hacer (✅ factibles con la API)
+- [ ] **Navegación 100% teclado** (flechas, Enter para completar/expandir, acciones ⌘K)
+- [ ] **Agrupado por fecha** (Vencidas / Hoy / Mañana / Esta semana) — *distinto de subtareas*
+- [ ] **Vista de completadas** (toggle ver/ocultar)
+- [ ] **Vista calendario** (grilla mensual con tareas por fecha)
+- [ ] **Badge con contador** en el menu bar + toggle en Settings
+- [ ] **Launch at login** (SMAppService)
+- [ ] **Auto-refresh optimizado** (al abrir + intervalo, con backoff/debounce)
+- [ ] **Widget de escritorio real** (App Group + escritura de cache)
+- [ ] **Drag & drop** para reordenar dentro de una lista
+- [ ] **Crear / renombrar / borrar listas** desde la app
+- [ ] **Markdown en notas/descripciones** (render básico)
+- [ ] **Más idiomas/formatos de fecha** (ampliar parser ES/EN)
+
+### Hechas
+- [x] **Marcador `!fecha`** (`!4dias`, `!3d`, `!2semanas`, `!1mes`, `!manana`) — ES/EN, 18 tests
+- [x] Add Task UI expandida (Command Window estilo KiteTasks)
+- [x] Parsing de `#lista` y fechas naturales
+- [x] Subtareas, search, appearance, draft retention, resize/posición persistente
+
+### ⚠️ Con limitación de la API de Google Tasks (importante)
+- [ ] **Recordatorios / notificaciones**: la fecha sí sincroniza; **la hora NO** (la API solo guarda fecha). Una notificación con hora sería **local en la app**, no sincronizada con Google ni con el celular.
+- [ ] **Recurrencia**: ⚠️ **La API de Google Tasks NO expone recurrencia.** Una tarea recurrente creada en el celular (app de Google) **no se puede leer ni editar** vía API — Eventually la vería como una tarea suelta. Para tener recurrencia real y bidireccional habría que **gestionarla localmente en Eventually** (generar las instancias nosotros), lo cual no se reflejaría en la app oficial de Google. Decisión de diseño pendiente.
+
+### Otras
+- [ ] **Multi-profile + multi-provider** (Google Tasks + Linear + TickTick) — ver sección arriba e issue #1
+- [ ] **Clipboard → task**, **snippets/templates**, **aliases de lista** (quick-capture estilo Raycast)

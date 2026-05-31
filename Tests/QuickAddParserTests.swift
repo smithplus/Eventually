@@ -100,4 +100,49 @@ final class QuickAddParserTests: XCTestCase {
         XCTAssertEqual(r.dueDate, calendar.startOfDay(for: refDate()))
         XCTAssertEqual(r.title, "Tarea mañana")
     }
+
+    // MARK: - Explicit ! date markers
+
+    private func today() -> Date { calendar.startOfDay(for: refDate()) }
+
+    func testBangRelativeDaysSpanish() {
+        let r = QuickAddParser.parse("Entregar informe !4dias", referenceDate: refDate(), calendar: calendar)
+        XCTAssertEqual(r.title, "Entregar informe")
+        XCTAssertEqual(r.dueDate, calendar.date(byAdding: .day, value: 4, to: today()))
+    }
+
+    func testBangRelativeWeeksSpanish() {
+        let r = QuickAddParser.parse("Renovar !2semanas", referenceDate: refDate(), calendar: calendar)
+        XCTAssertEqual(r.dueDate, calendar.date(byAdding: .day, value: 14, to: today()))
+    }
+
+    func testBangRelativeDaysEnglishAbbrev() {
+        let r = QuickAddParser.parse("Ship build !3d", referenceDate: refDate(), calendar: calendar)
+        XCTAssertEqual(r.title, "Ship build")
+        XCTAssertEqual(r.dueDate, calendar.date(byAdding: .day, value: 3, to: today()))
+    }
+
+    func testBangMonths() {
+        let r = QuickAddParser.parse("Revisión !1mes", referenceDate: refDate(), calendar: calendar)
+        XCTAssertEqual(r.dueDate, calendar.date(byAdding: .month, value: 1, to: today()))
+    }
+
+    func testBangWord() {
+        let r = QuickAddParser.parse("Pagar !manana", referenceDate: refDate(), calendar: calendar)
+        XCTAssertEqual(r.dueDate, calendar.date(byAdding: .day, value: 1, to: today()))
+    }
+
+    func testBangTimeUnitResolvesToToday() {
+        // Google Tasks stores date only, so !5min resolves to today.
+        let r = QuickAddParser.parse("Llamar !5min", referenceDate: refDate(), calendar: calendar)
+        XCTAssertEqual(r.dueDate, today())
+        XCTAssertEqual(r.title, "Llamar")
+    }
+
+    func testBareNumberWordIsNotConsumed() {
+        // "4 panes" must NOT be read as a date (only ! markers parse durations).
+        let r = QuickAddParser.parse("Comprar 4 panes", referenceDate: refDate(), calendar: calendar)
+        XCTAssertNil(r.dueDate)
+        XCTAssertEqual(r.title, "Comprar 4 panes")
+    }
 }

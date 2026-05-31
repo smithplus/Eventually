@@ -168,30 +168,18 @@ struct QuickAddPanel: View {
     // MARK: - Date picker popover
 
     private var datePickerPopover: some View {
-        VStack(alignment: .leading, spacing: Theme.spaceS) {
-            DatePicker("", selection: Binding(
-                get: { draft.dueDate ?? Date() },
-                set: { draft.dueDate = Calendar.current.startOfDay(for: $0) }
-            ), displayedComponents: .date)
-            .datePickerStyle(.graphical)
-            .labelsHidden()
-            .tint(Theme.accent)
-
-            Divider()
-
-            HStack {
-                if draft.dueDate != nil {
-                    Button("Clear") { draft.dueDate = nil; showDatePicker = false }
-                        .buttonStyle(.plain)
-                        .foregroundStyle(Theme.danger)
-                }
-                Spacer()
-                Button("Done") { showDatePicker = false }
-                    .buttonStyle(CapsuleButton())
+        DatePicker("", selection: Binding(
+            get: { draft.dueDate ?? Date() },
+            set: {
+                draft.dueDate = Calendar.current.startOfDay(for: $0)
+                showDatePicker = false   // close as soon as a day is picked
             }
-        }
-        .padding(Theme.spaceM)
-        .frame(width: 280)
+        ), displayedComponents: .date)
+        .datePickerStyle(.graphical)
+        .labelsHidden()
+        .tint(Theme.accent)
+        .padding(Theme.spaceS)
+        .fixedSize()
     }
 
     // MARK: - Filter toolbar (smart views + lists, with controls on the right)
@@ -362,7 +350,7 @@ struct QuickAddPanel: View {
     // MARK: - Name
 
     private var nameField: some View {
-        TextField("", text: $draft.name, prompt: Text("Task name  ·  use # for list"))
+        TextField("", text: $draft.name, prompt: Text("Task name  ·  # list  ·  !4dias"))
             .textFieldStyle(.plain)
             .font(.system(size: 22, weight: .medium))
             .focused($nameFocused)
