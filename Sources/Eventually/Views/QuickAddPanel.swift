@@ -50,14 +50,20 @@ struct QuickAddPanel: View {
     @State private var panelFilter: GoogleTasksService.Selection = .today
 
     @AppStorage("defaultCommandView") private var defaultCommandView = "today"
-    @AppStorage("groupByList") private var groupByList = false
+    @AppStorage(DefaultsKey.groupByList) private var groupByList = false
+    @AppStorage(DefaultsKey.groupByDate) private var groupByDate = false
 
     @FocusState private var nameFocused: Bool
     @FocusState private var notesFocused: Bool
 
     /// Group the aggregated smart views into per-list sections.
-    private var isGrouped: Bool {
+    private var isGroupedByList: Bool {
         groupByList && panelFilter.isSmart && !showSearch
+    }
+
+    /// Group rows into date buckets (Overdue/Today/…); works in any view.
+    private var isGroupedByDate: Bool {
+        groupByDate && !showSearch
     }
 
     private var panelFilterListId: String? {
