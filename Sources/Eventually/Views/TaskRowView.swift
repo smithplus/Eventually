@@ -55,8 +55,7 @@ struct TaskRowView: View {
                     Task { await tasksService.setDueDate(task, to: pickerDate) }
                     showDatePicker = false
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(Theme.accent)
+                .buttonStyle(CapsuleButton())
             }
             .padding()
         }
@@ -244,9 +243,7 @@ struct TaskRowView: View {
                 Spacer()
 
                 Button("Done") { saveDetail() }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.small)
-                    .tint(Theme.accent)
+                    .buttonStyle(CapsuleButton())
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

@@ -7,13 +7,14 @@ enum Theme {
 
     // MARK: - Colors (semantic, adapt to light/dark)
 
-    /// Warm amber — the brand accent. "Eventually, in good time."
-    static let accent = Color(hex: "F0A830")
-    static let accentSoft = Color(hex: "F0A830").opacity(0.16)
+    /// Primary accent — the system accent color (blue by default, like Google
+    /// Tasks) so the app stays consistent with native macOS controls.
+    static let accent = Color.accentColor
+    static let accentSoft = Color.accentColor.opacity(0.15)
 
-    /// Date chips (calm blue-green, distinct from accent)
-    static let dateChip = Color(hex: "5BB8A5")
-    static let dateChipSoft = Color(hex: "5BB8A5").opacity(0.16)
+    /// Due-date accent (warm orange, distinct from the primary accent).
+    static let dateChip = Color(hex: "E8954A")
+    static let dateChipSoft = Color(hex: "E8954A").opacity(0.16)
 
     /// Overdue / urgent
     static let danger = Color(hex: "E5604D")
@@ -50,5 +51,23 @@ extension Color {
             (r, g, b) = (0, 0, 0)
         }
         self.init(.sRGB, red: Double(r) / 255, green: Double(g) / 255, blue: Double(b) / 255, opacity: 1)
+    }
+}
+
+// MARK: - Capsule button style
+
+/// Filled, fully-rounded (pill) accent button — the app's primary action style.
+struct CapsuleButton: ButtonStyle {
+    var enabled: Bool = true
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, Theme.spaceM)
+            .padding(.vertical, 6)
+            .background(Capsule().fill(enabled ? Theme.accent : Color.secondary.opacity(0.35)))
+            .opacity(configuration.isPressed ? 0.8 : 1)
+            .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
     }
 }

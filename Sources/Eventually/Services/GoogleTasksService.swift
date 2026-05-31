@@ -263,10 +263,61 @@ class GoogleTasksService: ObservableObject {
         case today
         case upcoming
         case list(String)   // listId
+
+        /// True for the aggregated smart views (→ show list badges).
+        var isSmart: Bool {
+            if case .list = self { return false }
+            return true
+        }
+
+        var icon: String {
+            switch self {
+            case .all:      return "tray.full"
+            case .today:    return "sun.max"
+            case .upcoming: return "calendar"
+            case .list:     return "list.bullet"
+            }
+        }
+
+        /// Compact, persistable token. Lists serialize as `list:<id>`.
+        var storageKey: String {
+            switch self {
+            case .all:          return "all"
+            case .today:        return "today"
+            case .upcoming:     return "upcoming"
+            case .list(let id): return "list:" + id
+            }
+        }
+
+        /// Rebuild from a `storageKey`, falling back to `.all` if a saved list
+        /// no longer exists or `.today` for an unknown token.
+        init(storageKey: String, lists: [TaskList]) {
+            if storageKey.hasPrefix("list:") {
+                let id = String(storageKey.dropFirst(5))
+                self = lists.contains { $0.id == id } ? .list(id) : .all
+            } else {
+                switch storageKey {
+                case "all":      self = .all
+                case "upcoming": self = .upcoming
+                default:         self = .today
+                }
+            }
+        }
     }
 
     var allTasks: [GTask] {
         tasks.values.flatMap { $0 }
+    }
+
+    /// Tasks across every list whose title or notes match `query`.
+    func search(_ query: String) -> [OrderedTask] {
+        let q = query.trimmingCharacters(in: .whitespaces)
+        guard !q.isEmpty else { return [] }
+        return allTasks
+            .filter { $0.title.localizedCaseInsensitiveContains(q)
+                   || ($0.notes?.localizedCaseInsensitiveContains(q) ?? false) }
+            .sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+            .map { OrderedTask(task: $0, isChild: false) }
     }
 
     /// Returns the rows to display for a given selection.

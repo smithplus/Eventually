@@ -11,11 +11,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     let tasksService = GoogleTasksService()
     let shortcutManager = ShortcutManager()
     private lazy var quickAdd = QuickAddWindowController(authService: authService, tasksService: tasksService)
+    private lazy var settings = SettingsWindowController(authService: authService, tasksService: tasksService, shortcutManager: shortcutManager)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         tasksService.authService = authService
+        applyAppearance()
         setupMenuBar()
         setupGlobalShortcuts()
+
+        NotificationCenter.default.addObserver(
+            forName: .openSettings, object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.settings.show() }
+        }
     }
 
     // MARK: - Menu Bar
@@ -82,4 +90,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 // MARK: - Notification Names
 extension Notification.Name {
     static let focusAddTask = Notification.Name("focusAddTask")
+    static let openSettings = Notification.Name("openSettings")
+}
+
+// MARK: - Appearance
+
+/// Applies the user's appearance preference (system / light / dark) app-wide.
+@MainActor
+func applyAppearance() {
+    let raw = UserDefaults.standard.string(forKey: DefaultsKey.appearance) ?? Appearance.system.rawValue
+    NSApp.appearance = Appearance(rawValue: raw)?.nsAppearance
 }

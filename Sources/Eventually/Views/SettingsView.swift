@@ -26,6 +26,8 @@ struct GeneralSettingsTab: View {
     @AppStorage("launchAtLogin") private var launchAtLogin = false
     @AppStorage("showBadgeCount") private var showBadgeCount = true
     @AppStorage("panelPosition") private var panelPosition = "center"
+    @AppStorage("defaultCommandView") private var defaultCommandView = "today"
+    @AppStorage("appearance") private var appearance = "system"
 
     var body: some View {
         Form {
@@ -35,12 +37,31 @@ struct GeneralSettingsTab: View {
                 }
             Toggle("Show task count badge", isOn: $showBadgeCount)
 
-            Picker("Quick-add panel position:", selection: $panelPosition) {
+            Picker("Appearance:", selection: $appearance) {
+                ForEach(Appearance.allCases, id: \.self) { mode in
+                    Text(mode.label).tag(mode.rawValue)
+                }
+            }
+            .pickerStyle(.segmented)
+            .onChange(of: appearance) { _ in applyAppearance() }
+
+            Picker("Command Window position:", selection: $panelPosition) {
                 Text("Left").tag("left")
                 Text("Center").tag("center")
                 Text("Right").tag("right")
             }
             .pickerStyle(.segmented)
+            .onChange(of: panelPosition) { _ in
+                // Choosing a position overrides a remembered manual location.
+                UserDefaults.standard.set(false, forKey: DefaultsKey.panelHasSavedFrame)
+            }
+
+            Picker("Command Window opens to:", selection: $defaultCommandView) {
+                Text("Today").tag("today")
+                Text("Upcoming").tag("upcoming")
+                Text("All Tasks").tag("all")
+                Text("Last used").tag("lastUsed")
+            }
         }
         .padding()
     }
@@ -68,7 +89,7 @@ struct AccountSettingsTab: View {
             if authService.isAuthenticated {
                 Image(systemName: "person.circle.fill")
                     .font(.system(size: 40))
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(Theme.accent)
 
                 Text(authService.userEmail ?? "Signed in to Google")
                     .font(.headline)

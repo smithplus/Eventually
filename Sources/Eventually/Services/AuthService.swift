@@ -386,7 +386,7 @@ final class LocalCallbackServer {
             </head>
             <body style="margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#1a1a1a;font-family:-apple-system,system-ui,sans-serif">
               <div style="text-align:center">
-                <div style="width:64px;height:64px;margin:0 auto 24px;border-radius:16px;background:#F0A830;display:flex;align-items:center;justify-content:center">
+                <div style="width:64px;height:64px;margin:0 auto 24px;border-radius:16px;background:#4285F4;display:flex;align-items:center;justify-content:center">
                   <span style="font-size:34px;color:#1a1a1a">&#10003;</span>
                 </div>
                 <h2 style="color:#fff;font-weight:600;margin:0 0 8px">Signed in successfully</h2>

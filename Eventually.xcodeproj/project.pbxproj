@@ -15,10 +15,12 @@
 		8139D84924D6DC7A43D2AB8D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09C022D34494F4FA32D62690 /* SettingsView.swift */; };
 		8E86124ED6AE9442EEF7F215 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E5CE035B63564A2A4686736 /* Config.swift */; };
 		921AEED93FF69DE9D6CF85DA /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7785FD9FC6FF4B5F94A887E3 /* AuthService.swift */; };
+		948C6C13421888D359E0846C /* AppConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 724F39E60C872F080A124F79 /* AppConstants.swift */; };
 		A4E71FAD9A46496658047D23 /* GoogleTasksService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65B0024D67F8B4DCAA6CF4A5 /* GoogleTasksService.swift */; };
 		AC97E210DCEE6D4031369C0D /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = B98465F1B18E321E5210D60B /* DesignTokens.swift */; };
 		B7E080C74D34ABF9C26CD0C2 /* QuickAddParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 699C1E7817C57A3E603589F1 /* QuickAddParser.swift */; };
 		C18B0BCDA30120C8A7FF3BE5 /* QuickAddParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BA7524689D0744501FC878D /* QuickAddParserTests.swift */; };
+		C8279D1A249680F7A45C0AE0 /* SettingsWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 047E7FE58CD186E1755226C1 /* SettingsWindowController.swift */; };
 		CB030B58A7CC72FF05C5BD9B /* TasksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F0F9F7194563018503631D /* TasksView.swift */; };
 		CFE353BF327597B56A2B706B /* EventuallyWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81BD98CBF35A78F780484634 /* EventuallyWidget.swift */; };
 		D467EFD19300B201DDD54E07 /* QuickAddParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 699C1E7817C57A3E603589F1 /* QuickAddParser.swift */; };
@@ -39,6 +41,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		047E7FE58CD186E1755226C1 /* SettingsWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindowController.swift; sourceTree = "<group>"; };
 		09C022D34494F4FA32D62690 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		1B9392E107C5BF578B6FFB06 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		2528313113D8A00B1D2BF5C3 /* TaskRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskRowView.swift; sourceTree = "<group>"; };
@@ -49,6 +52,7 @@
 		6777E7409B02B8B37FE60F57 /* QuickAddPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAddPanel.swift; sourceTree = "<group>"; };
 		699C1E7817C57A3E603589F1 /* QuickAddParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAddParser.swift; sourceTree = "<group>"; };
 		724BD165A7E37A793C126BEF /* EventuallyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventuallyApp.swift; sourceTree = "<group>"; };
+		724F39E60C872F080A124F79 /* AppConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConstants.swift; sourceTree = "<group>"; };
 		74FFCA547C60B571E13CE40D /* TaskModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskModels.swift; sourceTree = "<group>"; };
 		7785FD9FC6FF4B5F94A887E3 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		81BD98CBF35A78F780484634 /* EventuallyWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventuallyWidget.swift; sourceTree = "<group>"; };
@@ -109,6 +113,7 @@
 		8C7828199FA585BE8BA59DD3 /* Eventually */ = {
 			isa = PBXGroup;
 			children = (
+				724F39E60C872F080A124F79 /* AppConstants.swift */,
 				1B9392E107C5BF578B6FFB06 /* AppDelegate.swift */,
 				4E5CE035B63564A2A4686736 /* Config.swift */,
 				B98465F1B18E321E5210D60B /* DesignTokens.swift */,
@@ -116,6 +121,7 @@
 				724BD165A7E37A793C126BEF /* EventuallyApp.swift */,
 				FF3089A445FC67D2BAF76401 /* Info.plist */,
 				BCB7C97EEC7AB129BF3A4E6C /* QuickAddWindowController.swift */,
+				047E7FE58CD186E1755226C1 /* SettingsWindowController.swift */,
 				A9C036A8E5F3FC19ECEBDEA3 /* ShortcutManager.swift */,
 				F18569FC5E0601F4823583C5 /* Models */,
 				DAED7DA66F1BADE3DD1BEA8F /* Services */,
@@ -272,6 +278,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				948C6C13421888D359E0846C /* AppConstants.swift in Sources */,
 				22D84C174F9DB1CC894B69A4 /* AppDelegate.swift in Sources */,
 				921AEED93FF69DE9D6CF85DA /* AuthService.swift in Sources */,
 				8E86124ED6AE9442EEF7F215 /* Config.swift in Sources */,
@@ -283,6 +290,7 @@
 				D467EFD19300B201DDD54E07 /* QuickAddParser.swift in Sources */,
 				3D3A0022DFB368013165FC91 /* QuickAddWindowController.swift in Sources */,
 				8139D84924D6DC7A43D2AB8D /* SettingsView.swift in Sources */,
+				C8279D1A249680F7A45C0AE0 /* SettingsWindowController.swift in Sources */,
 				70C38DC9266521F00548E4C7 /* ShortcutManager.swift in Sources */,
 				0180B6FF3AF4E8BCBBFD1BF9 /* TaskModels.swift in Sources */,
 				E6DAC533697E665F6E22D506 /* TaskRowView.swift in Sources */,
@@ -382,10 +390,12 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -446,6 +456,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = Sources/EventuallyWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../../../Frameworks @executable_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = app.tabella.Eventually.EventuallyWidget;
 				PRODUCT_NAME = EventuallyWidget;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
@@ -490,10 +501,12 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -529,6 +542,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = Sources/EventuallyWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../../../Frameworks @executable_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = app.tabella.Eventually.EventuallyWidget;
 				PRODUCT_NAME = EventuallyWidget;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;

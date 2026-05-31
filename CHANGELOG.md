@@ -5,6 +5,40 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+> **Surface naming** (for clarity going forward):
+> - **Popover** — the menu-bar dropdown opened with ⌘⇧T (compact, transient).
+> - **Command Window** — the floating window opened with ⌘⇧O (full input + tabs + task list). This is becoming the primary surface.
+
+### Added
+- **Search** across all lists from the Command Window (magnifying-glass toggle; Esc closes search first).
+- **Appearance** setting: System / Light / Dark, applied app-wide.
+- **Command Window default view** setting: opens to Today / Upcoming / All / Last used.
+- **Command Window remembers its position and size** across launches and restarts; restored frames are clamped to stay on-screen. The position is anchored near the top (Spotlight-style).
+- **Draft retention** (Raycast-style): the in-progress task survives click-outside; Esc clears it (then closes when empty).
+
+### Internal (cleanup pass)
+- `Selection` enum now owns `isSmart`, `icon`, and `storageKey`/`init(storageKey:)` — collapsed duplicated view↔string mapping and smart-view predicates across views.
+- Added `Appearance` enum and a `DefaultsKey` constants namespace to replace scattered magic strings.
+- Consolidated window-frame clamping into one `clampedToScreen` helper.
+
+### Added
+- **Command Window is resizable** (drag any edge); its size persists across launches. Position still follows the Settings preference (Left/Center/Right).
+- **Feature parity** between the Popover and the Command Window: the Command Window now also has Today/Upcoming smart-view tabs, a sort menu, a refresh button, the account/Settings/Sign Out/Quit menu, and an error banner.
+- **Rounded (capsule) buttons** across the floating UI via a reusable `CapsuleButton` style.
+- Dedicated **Settings window** managed by the app (`SettingsWindowController`) so it reliably opens from the ⋯ menu on the menu-bar (LSUIElement) app.
+
+### Changed (latest pass)
+- **Accent color** switched from amber to the **system accent color** (blue by default, matching Google Tasks and native macOS controls) for visual consistency across tabs, buttons, and icons.
+- Due-date chips keep a distinct warm-orange accent so dates stay visually separate from the primary accent.
+- Unified hardcoded `.blue` usages to `Theme.accent`.
+
+### Fixed (latest pass)
+- **Settings window not opening** — replaced the unreliable `showSettingsWindow:` selector with a managed `NSWindow`.
+
+### Build (latest pass)
+- Adopted Xcode-recommended build settings in `project.yml` (so they survive `xcodegen` regeneration): `DEAD_CODE_STRIPPING`, `ENABLE_USER_SCRIPT_SANDBOXING`.
+- Widget now derives `CFBundleIdentifier` from the `PRODUCT_BUNDLE_IDENTIFIER` build setting instead of a hardcoded value.
+
 ### Added
 - **Smart views** in the menu bar popover: Today, Upcoming, All Tasks, plus each individual list.
 - **List badges** with stable per-list colors when viewing aggregated tasks.

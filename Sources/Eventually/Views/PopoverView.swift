@@ -28,7 +28,7 @@ struct LoginView: View {
 
             Image(systemName: "checklist")
                 .font(.system(size: 48, weight: .light))
-                .foregroundStyle(.blue)
+                .foregroundStyle(Theme.accent)
 
             VStack(spacing: 8) {
                 Text("Eventually")
@@ -59,7 +59,7 @@ struct LoginView: View {
                 }
                 .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(CapsuleButton(enabled: !authService.isLoading))
             .disabled(authService.isLoading)
             .padding(.horizontal, 32)
 

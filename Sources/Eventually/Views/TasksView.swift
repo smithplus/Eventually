@@ -15,12 +15,6 @@ struct TasksView: View {
         return tasksService.taskLists.first?.id
     }
 
-    /// Whether the current view aggregates multiple lists (→ show list badges).
-    var isSmartView: Bool {
-        if case .list = selection { return false }
-        return true
-    }
-
     var currentTasks: [GoogleTasksService.OrderedTask] {
         tasksService.rows(for: selection)
     }
@@ -31,15 +25,6 @@ struct TasksView: View {
         case .today:    return "Today"
         case .upcoming: return "Upcoming"
         case .list(let id): return tasksService.listTitle(for: id) ?? "My Tasks"
-        }
-    }
-
-    private var selectionIcon: String {
-        switch selection {
-        case .all:      return "tray.full"
-        case .today:    return "sun.max"
-        case .upcoming: return "calendar"
-        case .list:     return "list.bullet"
         }
     }
 
@@ -82,7 +67,7 @@ struct TasksView: View {
 
     private var headerBar: some View {
         HStack(spacing: 8) {
-            Image(systemName: selectionIcon)
+            Image(systemName: selection.icon)
                 .foregroundStyle(Theme.accent)
                 .font(.system(size: 14, weight: .semibold))
 
@@ -175,14 +160,9 @@ struct TasksView: View {
         .fixedSize()
     }
 
-    /// Opens the Settings window (selector differs between macOS 13 and 14+).
+    /// Opens the Settings window via the AppDelegate (managed window).
     private func openSettings() {
-        NSApp.activate(ignoringOtherApps: true)
-        if #available(macOS 14.0, *) {
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-        } else {
-            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
-        }
+        NotificationCenter.default.post(name: .openSettings, object: nil)
     }
 
     // MARK: - Add Task Row
@@ -190,7 +170,7 @@ struct TasksView: View {
     private var addTaskRow: some View {
         HStack(spacing: 10) {
             Image(systemName: "plus.circle.fill")
-                .foregroundStyle(.blue)
+                .foregroundStyle(Theme.accent)
                 .font(.system(size: 16))
                 .onTapGesture {
                     showAddTask = true
@@ -210,8 +190,7 @@ struct TasksView: View {
 
                 if !newTaskTitle.isEmpty {
                     Button("Add") { submitNewTask() }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.small)
+                        .buttonStyle(CapsuleButton())
                 }
             } else {
                 Text("Add a task")
@@ -246,7 +225,7 @@ struct TasksView: View {
             ScrollView {
                 LazyVStack(spacing: 0) {
                     ForEach(currentTasks) { ordered in
-                        TaskRowView(task: ordered.task, isChild: ordered.isChild, showListBadge: isSmartView)
+                        TaskRowView(task: ordered.task, isChild: ordered.isChild, showListBadge: selection.isSmart)
                         Divider().padding(.leading, ordered.isChild ? 64 : 40)
                     }
                 }
