@@ -276,23 +276,22 @@ struct QuickAddPanel: View {
 
     private var headerControls: some View {
         HStack(spacing: Theme.spaceS) {
-            quickDateChip("Today", date: Calendar.current.startOfDay(for: Date()))
-            quickDateChip("Tomorrow", date: Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: Date())))
-
-            Button { showDatePicker.toggle() } label: {
-                Image(systemName: "calendar")
-                    .font(.system(size: 12))
-                    .padding(.horizontal, Theme.spaceS + 2)
-                    .padding(.vertical, 5)
-            }
-            .buttonStyle(.plain)
-            .background(Capsule().strokeBorder(Color.primary.opacity(0.15), lineWidth: 1))
-            .popover(isPresented: $showDatePicker, arrowEdge: .bottom) {
-                datePickerPopover
-            }
-
             if let due = effectiveDueDate {
-                parsedChip(text: dueLabel(due), system: "calendar", color: Theme.dateChip, soft: Theme.dateChipSoft)
+                // A date is set → show just it (tap to change, ✕ to clear).
+                selectedDateChip(due)
+            } else {
+                quickDateChip("Today", date: Calendar.current.startOfDay(for: Date()))
+                quickDateChip("Tomorrow", date: Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: Date())))
+                Button { showDatePicker.toggle() } label: {
+                    Image(systemName: "calendar")
+                        .font(.system(size: 12))
+                        .padding(.horizontal, Theme.spaceS + 2)
+                        .padding(.vertical, 5)
+                }
+                .buttonStyle(.plain)
+                .background(Capsule().strokeBorder(Color.primary.opacity(0.15), lineWidth: 1))
+                .popover(isPresented: $showDatePicker, arrowEdge: .bottom) { datePickerPopover }
+                .fixedSize()
             }
 
             listSelectorChip
@@ -304,6 +303,33 @@ struct QuickAddPanel: View {
                 .disabled(!canSubmit)
                 .keyboardShortcut(.return, modifiers: .command)
         }
+    }
+
+    /// The chosen due date as a chip: tap to re-pick, ✕ to clear.
+    private func selectedDateChip(_ due: Date) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: "calendar").font(.system(size: 11))
+            Text(dueLabel(due)).font(.system(size: 12, weight: .medium)).lineLimit(1)
+            Button { clearDate() } label: {
+                Image(systemName: "xmark.circle.fill").font(.system(size: 11))
+            }
+            .buttonStyle(.plain)
+        }
+        .foregroundStyle(Theme.dateChip)
+        .padding(.horizontal, Theme.spaceS + 2)
+        .padding(.vertical, 5)
+        .background(Capsule().fill(Theme.dateChipSoft))
+        .fixedSize()
+        .onTapGesture { showDatePicker = true }
+        .popover(isPresented: $showDatePicker, arrowEdge: .bottom) { datePickerPopover }
+    }
+
+    /// Clear the due date, including any `!token` typed in the title.
+    private func clearDate() {
+        draft.dueDate = nil
+        var tokens = draft.name.split(separator: " ", omittingEmptySubsequences: false).map(String.init)
+        tokens.removeAll { $0.hasPrefix("!") }
+        draft.name = tokens.joined(separator: " ")
     }
 
     /// List selector chip — pick the target list by click (alternative to `#`).
@@ -629,20 +655,27 @@ struct QuickAddPanel: View {
                 suggestionsVisible: anySuggestionsVisible,
                 onShiftReturn: { notesFocused = true },
                 onUp: { moveSuggestion(-1) },
-                onDown: { moveSuggestion(1) }
+                onDown: { moveSuggestion(1) },
+                onTab: { _ = acceptSuggestion() }
             ))
             .onChange(of: draft.name) { _ in suggestionIndex = 0 }
             .onSubmit {
                 // Enter accepts the highlighted suggestion, else adds the task.
                 // (Shift+Enter jumps to the description; ⌘Enter adds via the button.)
-                if showListSuggestions, listSuggestions.indices.contains(suggestionIndex) {
-                    selectList(listSuggestions[suggestionIndex])
-                } else if showDateSuggestions, dateSuggestions.indices.contains(suggestionIndex) {
-                    selectDate(dateSuggestions[suggestionIndex])
-                } else {
-                    submit()
-                }
+                if !acceptSuggestion() { submit() }
             }
+    }
+
+    /// Accept the highlighted `#`/`!` suggestion if a dropdown is open.
+    @discardableResult
+    private func acceptSuggestion() -> Bool {
+        if showListSuggestions, listSuggestions.indices.contains(suggestionIndex) {
+            selectList(listSuggestions[suggestionIndex]); return true
+        }
+        if showDateSuggestions, dateSuggestions.indices.contains(suggestionIndex) {
+            selectDate(dateSuggestions[suggestionIndex]); return true
+        }
+        return false
     }
 
     private func moveSuggestion(_ delta: Int) {
@@ -768,17 +801,6 @@ struct QuickAddPanel: View {
         .fixedSize()
     }
 
-    private func parsedChip(text: String, system: String, color: Color, soft: Color) -> some View {
-        HStack(spacing: 4) {
-            Image(systemName: system).font(.system(size: 11))
-            Text(text).font(.system(size: 12, weight: .medium))
-        }
-        .foregroundStyle(color)
-        .padding(.horizontal, Theme.spaceS + 2)
-        .padding(.vertical, 5)
-        .background(Capsule().fill(soft))
-    }
-
     // MARK: - Actions
 
     private func submit() {
@@ -826,6 +848,7 @@ private struct CommandKeyHandler: ViewModifier {
     let onShiftReturn: () -> Void
     let onUp: () -> Void
     let onDown: () -> Void
+    let onTab: () -> Void
 
     func body(content: Content) -> some View {
         if #available(macOS 14.0, *) {
@@ -838,6 +861,9 @@ private struct CommandKeyHandler: ViewModifier {
                 }
                 if suggestionsVisible, press.key == .downArrow {
                     onDown(); return .handled
+                }
+                if suggestionsVisible, press.key == .tab {
+                    onTab(); return .handled
                 }
                 return .ignored
             }

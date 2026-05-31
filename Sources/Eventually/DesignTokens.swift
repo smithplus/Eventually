@@ -64,6 +64,8 @@ struct CapsuleButton: ButtonStyle {
         configuration.label
             .font(.system(size: 13, weight: .semibold))
             .foregroundStyle(.white)
+            .lineLimit(1)
+            .fixedSize()
             .padding(.horizontal, Theme.spaceM)
             .padding(.vertical, 6)
             .background(Capsule().fill(enabled ? Theme.accent : Color.secondary.opacity(0.35)))
