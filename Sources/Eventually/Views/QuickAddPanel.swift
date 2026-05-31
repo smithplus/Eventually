@@ -98,12 +98,16 @@ struct QuickAddPanel: View {
         QuickAddParser.parse(draft.name)
     }
 
-    /// The list resolved from a `#token`, if it matches a real list. Compares
-    /// ignoring spaces so an autocompleted token like `#📋Lectura` still matches
-    /// a list titled "📋 Lectura".
+    /// The list resolved from a `#token`, if it matches a real list.
     private var resolvedList: TaskList? {
-        guard let name = parsed.listName, !name.isEmpty else { return nil }
+        guard let name = parsed.listName else { return nil }
+        return matchList(name)
+    }
+
+    /// Match a list by name, ignoring spaces, so `#📋Lectura` matches "📋 Lectura".
+    private func matchList(_ name: String) -> TaskList? {
         let needle = name.replacingOccurrences(of: " ", with: "").lowercased()
+        guard !needle.isEmpty else { return nil }
         return tasksService.taskLists.first {
             $0.title.replacingOccurrences(of: " ", with: "").lowercased().contains(needle)
         }
@@ -658,7 +662,10 @@ struct QuickAddPanel: View {
                 onDown: { moveSuggestion(1) },
                 onTab: { _ = acceptSuggestion() }
             ))
-            .onChange(of: draft.name) { _ in suggestionIndex = 0 }
+            .onChange(of: draft.name) { _ in
+                suggestionIndex = 0
+                commitCompletedTokens()
+            }
             .onSubmit {
                 // Enter accepts the highlighted suggestion, else adds the task.
                 // (Shift+Enter jumps to the description; ⌘Enter adds via the button.)
@@ -715,15 +722,45 @@ struct QuickAddPanel: View {
     }
 
     /// Replace the `#fragment` token with the chosen list and pin the selection.
+    /// Pick a list from the autocomplete: drop the partial `#fragment` and pin
+    /// the list (it shows as the colored chip, not as text).
     private func selectList(_ list: TaskList) {
-        var tokens = draft.name.split(separator: " ", omittingEmptySubsequences: false).map(String.init)
-        if !tokens.isEmpty {
-            // Collapse spaces so the title stays a single #token
-            tokens[tokens.count - 1] = "#" + list.title.replacingOccurrences(of: " ", with: "")
-        }
-        draft.name = tokens.joined(separator: " ") + " "
+        removeLastWord()
         draft.listId = list.id
         nameFocused = true
+    }
+
+    /// Remove the last (in-progress) word, keeping a trailing space to continue.
+    private func removeLastWord() {
+        var parts = draft.name.components(separatedBy: " ")
+        if !parts.isEmpty { parts.removeLast() }
+        draft.name = parts.joined(separator: " ")
+        if !draft.name.isEmpty && !draft.name.hasSuffix(" ") { draft.name += " " }
+    }
+
+    /// When a `#list` or `!date` token is completed (a space follows it), turn it
+    /// into its colored chip and strip it from the text — leaving just the note.
+    private func commitCompletedTokens() {
+        let parts = draft.name.components(separatedBy: " ")
+        guard parts.count >= 2 else { return }
+        for i in 0..<(parts.count - 1) {       // every token before the last is "finished"
+            let raw = parts[i]
+            if raw.hasPrefix("#"), raw.count > 1, let list = matchList(String(raw.dropFirst())) {
+                draft.listId = list.id
+                removeWord(at: i); return
+            }
+            if raw.hasPrefix("!"), raw.count > 1, let date = QuickAddParser.parse(raw).dueDate {
+                draft.dueDate = date
+                removeWord(at: i); return
+            }
+        }
+    }
+
+    private func removeWord(at index: Int) {
+        var parts = draft.name.components(separatedBy: " ")
+        guard index < parts.count else { return }
+        parts.remove(at: index)
+        draft.name = parts.joined(separator: " ")
     }
 
     // MARK: - !date autocomplete dropdown
