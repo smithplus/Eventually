@@ -268,24 +268,18 @@ struct QuickAddPanel: View {
     // MARK: - Description (optional, markdown-friendly)
 
     private var descriptionField: some View {
-        ZStack(alignment: .topLeading) {
-            if draft.notes.isEmpty {
-                Text("Description (optional · markdown)")
-                    .font(.system(size: 13))
-                    .foregroundStyle(.tertiary)
-                    .padding(.top, 2)
-                    .allowsHitTesting(false)
-            }
-            // TextEditor reliably inserts a newline on Shift+Enter; plain Enter
-            // is intercepted to add the task.
-            TextEditor(text: $draft.notes)
-                .font(.system(size: 13))
-                .foregroundStyle(.secondary)
-                .scrollContentBackground(.hidden)
-                .frame(minHeight: 22, maxHeight: 120)
-                .focused($notesFocused)
-                .modifier(DescriptionKeyHandler(onEnter: { submit() }))
-        }
+        // Auto-grows with content (1...8 lines). Enter adds the task; Shift+Enter
+        // inserts a newline (appended — works for linear typing).
+        TextField("Description (optional · markdown)", text: $draft.notes, axis: .vertical)
+            .textFieldStyle(.plain)
+            .font(.system(size: 13))
+            .foregroundStyle(.secondary)
+            .lineLimit(1...8)
+            .focused($notesFocused)
+            .modifier(DescriptionKeyHandler(
+                onEnter: { submit() },
+                onShiftEnter: { draft.notes += "\n" }
+            ))
     }
 
     // MARK: - Header controls (date chips + list selector + add)
@@ -895,13 +889,15 @@ struct QuickAddPanel: View {
 /// In the description: Enter adds the task; Shift+Enter inserts a newline.
 private struct DescriptionKeyHandler: ViewModifier {
     let onEnter: () -> Void
+    let onShiftEnter: () -> Void
     func body(content: Content) -> some View {
         if #available(macOS 14.0, *) {
             content.onKeyPress { press in
-                if press.key == .return, !press.modifiers.contains(.shift) {
-                    onEnter(); return .handled
+                guard press.key == .return else { return .ignored }
+                if press.modifiers.contains(.shift) {
+                    onShiftEnter(); return .handled
                 }
-                return .ignored   // Shift+Return falls through → newline
+                onEnter(); return .handled
             }
         } else {
             content
