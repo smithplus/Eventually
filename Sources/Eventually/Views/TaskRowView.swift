@@ -178,8 +178,8 @@ struct TaskRowView: View {
                 HStack(spacing: 4) {
                     Image(systemName: "text.alignleft")
                         .font(.system(size: 9))
-                    Text(notes)
-                        .lineLimit(1)
+                    Text(markdown(notes))
+                        .lineLimit(isExpanded ? 8 : 1)
                 }
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
@@ -210,17 +210,26 @@ struct TaskRowView: View {
                 .focused($isEditFocused)
                 .onSubmit { saveDetail() }
 
-            // Description / notes
+            // Description / notes — multi-line editor (Enter = line break, markdown source)
             HStack(alignment: .top, spacing: 6) {
                 Image(systemName: "text.alignleft")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
-                    .padding(.top, 3)
-                TextField("Add description", text: $editNotes, axis: .vertical)
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1...6)
+                    .padding(.top, 4)
+                ZStack(alignment: .topLeading) {
+                    if editNotes.isEmpty {
+                        Text("Add description · markdown")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.tertiary)
+                            .padding(.top, 1)
+                            .allowsHitTesting(false)
+                    }
+                    TextEditor(text: $editNotes)
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                        .scrollContentBackground(.hidden)
+                        .frame(minHeight: 36, maxHeight: 140)
+                }
             }
 
             // Quick controls
@@ -234,7 +243,7 @@ struct TaskRowView: View {
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
-                .tint(task.due != nil ? Theme.accent : .secondary)
+                .tint(task.due != nil ? Theme.dateChip : .secondary)
 
                 if showListBadge, let listId = task.listId {
                     listBadge(listId)
@@ -257,7 +266,7 @@ struct TaskRowView: View {
     private func dueBadge(_ date: Date) -> some View {
         let isOverdue = date < Calendar.current.startOfDay(for: Date()) && !task.isCompleted
         let isToday = Calendar.current.isDateInToday(date)
-        let color: Color = isOverdue ? Theme.danger : isToday ? Theme.accent : .secondary
+        let color: Color = isOverdue ? Theme.danger : isToday ? Theme.dateChip : .secondary
 
         return HStack(spacing: 3) {
             Image(systemName: isOverdue ? "exclamationmark.circle" : "calendar")
@@ -342,6 +351,14 @@ struct TaskRowView: View {
             formatter.timeStyle = .none
         }
         return formatter.string(from: date)
+    }
+
+    /// Render note text as markdown (bold, italic, links, line breaks).
+    private func markdown(_ string: String) -> AttributedString {
+        (try? AttributedString(
+            markdown: string,
+            options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)
+        )) ?? AttributedString(string)
     }
 }
 

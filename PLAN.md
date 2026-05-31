@@ -62,31 +62,37 @@
 
 > Features confirmadas por el usuario desde [ideas.md](ideas.md). **Cada pendiente tiene un GitHub issue para tracking.**
 
+> **Prioridad actual: refinar lo existente sobre agregar features nuevas.**
+
 ### Pendientes (con issue) — ✅ factibles con la API
 - [ ] **Agrupado por fecha** (Vencidas/Hoy/Mañana/Esta semana) — #2 — *distinto de subtareas*
 - [ ] **Vista de completadas** — #3
 - [ ] **Navegación 100% teclado + acciones ⌘K** — #4
 - [ ] **Vista calendario** — #5
-- [ ] **Auto-refresh optimizado** — #8
 - [ ] **Widget de escritorio real** (App Group + cache) — #9
-- [ ] **Drag & drop** para reordenar — #10
-- [ ] **Crear / renombrar / borrar listas** — #11
-- [ ] **Markdown en notas** — #12
+- [ ] **Drag & drop** para reordenar tareas — #10
 - [ ] **Quick-capture (clipboard/snippets/aliases)** — #13
 
 ### Pendientes con ⚠️ limitación de API (decisión de diseño)
 - [ ] **Recordatorios/notificaciones** — #6 — fecha sincroniza, hora sería local
 - [ ] **Recurrencia** — #7 — la API no la expone; habría que gestionarla local
 
+### Refinamiento pendiente (de la auditoría visual/UX)
+- [ ] Click-outside monitor: verificar que no cierre la ventana al usar popovers/menús
+- [ ] Empty state diferenciado (sin sesión / offline / sin listas / sin tareas)
+- [ ] Navegación por teclado para completar/editar tareas
+- [ ] Limpiar `error` al tener éxito; visibilidad de errores en auto-refresh de fondo
+
 ### Hechas
-- [x] **Badge con contador** en el menu bar + toggle en Settings
-- [x] **Launch at login** (SMAppService, real)
-- [x] **Sort** funciona en smart views; menú aplanado (1 click)
-- [x] **Fix timezone** de fechas (UTC) — hoy/vencidas/badge correctos
-- [x] **Marcador `!fecha`** (`!4dias`, `!2semanas`, `!1mes`, `!manana`) — ES/EN, 18 tests
-- [x] Add Task UI (Command Window), `#lista` + fechas naturales, subtareas
+- [x] **Single UI**: Popover retirado; todo en el Command Window (login incluido); ícono de menu bar opcional
+- [x] **Audit pass A**: routing de `#lista`, borrar lista activa, rename guard, sortOrder persiste, color de fecha unificado, doble-fetch removido
+- [x] **Auto-refresh optimizado** (Settings → Sync) — #8 ✅
+- [x] **Crear / renombrar / borrar / mover (local) listas** — #11 ✅
+- [x] **Markdown en notas** + descripción opcional en el input — #12 ✅
+- [x] Badge con contador, Launch at login (real), sort en smart views, fix timezone (UTC)
+- [x] Marcador `!fecha` (ES/EN, 18 tests), `#lista` + fechas naturales, subtareas
 - [x] Search, appearance (light/dark/system), draft retention (Raycast), retorno de foco
-- [x] Resize/posición persistente, agrupar por lista
+- [x] Resize/posición persistente, agrupar por lista, selector de lista en el input
 
 ### ⚠️ Con limitación de la API de Google Tasks (importante)
 - [ ] **Recordatorios / notificaciones**: la fecha sí sincroniza; **la hora NO** (la API solo guarda fecha). Una notificación con hora sería **local en la app**, no sincronizada con Google ni con el celular.

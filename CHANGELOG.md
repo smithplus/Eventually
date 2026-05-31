@@ -9,7 +9,19 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 > - **Popover** — the menu-bar dropdown opened with ⌘⇧T (compact, transient).
 > - **Command Window** — the floating window opened with ⌘⇧O (full input + tabs + task list). This is becoming the primary surface.
 
-### Added (latest)
+### Changed (latest — single UI + refinement pass)
+- **Retired the Popover entirely.** Eventually is now a single surface: the Command Window. Sign-in happens inside it (`CommandRoot` shows `LoginView` when signed out). Deleted `TasksView`; renamed `PopoverView.swift` → `LoginView.swift`.
+- **Menu bar icon is optional** — new Settings toggle "Show menu bar icon". With it hidden the ⌘⇧O shortcut still opens the Command Window.
+
+### Fixed (latest — audit pass A)
+- **List routing**: a typed `#token` now wins over a previously-picked list chip (most-recent intent), matching uses the same substring rule as the autocomplete, and a `#name` that matches nothing shows a warning chip instead of silently routing elsewhere.
+- **Deleting the list you're viewing** now resets the filter to Today instead of leaving a dead tab.
+- **Rename to an empty string** is now guarded (was sent to the API).
+- **`sortOrder` persists** across launches (was resetting to My order).
+- **Due-date color unified** — Today is now the orange date accent in both the rows and the expanded editor (was blue in one place).
+- Removed a **duplicate task fetch** on window open.
+
+### Added (earlier)
 - **Menu bar badge** with today's task count (toggle in Settings, now functional).
 - **Launch at login** wired via `SMAppService` (was a stub).
 - **Group tasks by list** in the smart views (Today/Upcoming/All), toggle in the sort menu.

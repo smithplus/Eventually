@@ -26,19 +26,31 @@ struct SettingsView: View {
 struct GeneralSettingsTab: View {
     @AppStorage(DefaultsKey.launchAtLogin) private var launchAtLogin = false
     @AppStorage(DefaultsKey.showBadgeCount) private var showBadgeCount = true
+    @AppStorage(DefaultsKey.showMenuBarIcon) private var showMenuBarIcon = true
     @AppStorage(DefaultsKey.panelPosition) private var panelPosition = "center"
     @AppStorage(DefaultsKey.defaultCommandView) private var defaultCommandView = "today"
     @AppStorage(DefaultsKey.appearance) private var appearance = "system"
+    @AppStorage(DefaultsKey.autoRefreshMinutes) private var autoRefreshMinutes = 15
 
     var body: some View {
         Form {
-            Section("Startup") {
-                Toggle("Launch at login", isOn: $launchAtLogin)
-                    .onChange(of: launchAtLogin) { LaunchAtLogin.set($0) }
+            Section("Menu bar") {
+                Toggle("Show menu bar icon", isOn: $showMenuBarIcon)
+                    .onChange(of: showMenuBarIcon) { _ in
+                        NotificationCenter.default.post(name: .menuBarIconSettingChanged, object: nil)
+                    }
                 Toggle("Show task count badge", isOn: $showBadgeCount)
                     .onChange(of: showBadgeCount) { _ in
                         NotificationCenter.default.post(name: .badgeSettingChanged, object: nil)
                     }
+                Text("The Command Window also opens with the ⌘⇧O shortcut, even with the icon hidden.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section("Startup") {
+                Toggle("Launch at login", isOn: $launchAtLogin)
+                    .onChange(of: launchAtLogin) { LaunchAtLogin.set($0) }
             }
 
             Section("Appearance") {
@@ -49,6 +61,18 @@ struct GeneralSettingsTab: View {
                 }
                 .pickerStyle(.segmented)
                 .onChange(of: appearance) { _ in applyAppearance() }
+            }
+
+            Section("Sync") {
+                Picker("Auto-refresh:", selection: $autoRefreshMinutes) {
+                    Text("Off").tag(0)
+                    Text("Every 5 min").tag(5)
+                    Text("Every 15 min").tag(15)
+                    Text("Every 30 min").tag(30)
+                }
+                .onChange(of: autoRefreshMinutes) { _ in
+                    NotificationCenter.default.post(name: .autoRefreshChanged, object: nil)
+                }
             }
 
             Section("Command Window") {

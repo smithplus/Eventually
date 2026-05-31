@@ -1,7 +1,31 @@
 import SwiftUI
 
-/// Floating quick-add panel (KiteTasks-style).
-/// Opened via ⌘⇧O, separate from the menu bar popover.
+/// Root of the Command Window: shows the login when signed out, the full
+/// quick-add panel when signed in. The single UI surface of the app.
+struct CommandRoot: View {
+    @EnvironmentObject var authService: AuthService
+    var onClose: () -> Void
+
+    var body: some View {
+        Group {
+            if authService.isAuthenticated {
+                QuickAddPanel(onClose: onClose)
+            } else {
+                LoginView()
+                    .frame(minWidth: 540, maxWidth: .infinity, minHeight: 420, maxHeight: .infinity)
+                    .background(.regularMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: Theme.radiusL, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.radiusL, style: .continuous)
+                            .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+                    )
+                    .onExitCommand { onClose() }
+            }
+        }
+    }
+}
+
+/// Floating quick-add panel (KiteTasks-style), opened via ⌘⇧O.
 struct QuickAddPanel: View {
     @EnvironmentObject var tasksService: GoogleTasksService
     @EnvironmentObject var authService: AuthService
@@ -15,6 +39,11 @@ struct QuickAddPanel: View {
     @State private var searchText = ""
     @State private var showSearch = false
     @FocusState private var searchFocused: Bool
+
+    @State private var renamingList: TaskList?
+    @State private var renameText = ""
+    @State private var showNewList = false
+    @State private var newListText = ""
 
     /// Which tasks are shown below the input.
     @State private var panelFilter: GoogleTasksService.Selection = .today
@@ -60,14 +89,22 @@ struct QuickAddPanel: View {
         QuickAddParser.parse(draft.name)
     }
 
-    /// The list resolved from a `#token`, if it matches a real list.
+    /// The list resolved from a `#token`, if it matches a real list. Uses the
+    /// same substring matching as the autocomplete dropdown for consistency.
     private var resolvedList: TaskList? {
-        guard let name = parsed.listName?.lowercased() else { return nil }
-        return tasksService.taskLists.first { $0.title.lowercased().hasPrefix(name) }
+        guard let name = parsed.listName, !name.isEmpty else { return nil }
+        return tasksService.taskLists.first { $0.title.localizedCaseInsensitiveContains(name) }
     }
 
+    /// A `#token` in the text is the most recent intent, so it wins over a
+    /// previously-picked chip selection.
     private var effectiveListId: String? {
-        draft.listId ?? resolvedList?.id ?? panelFilterListId ?? tasksService.taskLists.first?.id
+        resolvedList?.id ?? draft.listId ?? panelFilterListId ?? tasksService.taskLists.first?.id
+    }
+
+    /// True when the user typed a `#name` that matches no list.
+    private var unmatchedListToken: Bool {
+        parsed.listName != nil && !parsed.listName!.isEmpty && resolvedList == nil
     }
 
     // MARK: - #list autocomplete
@@ -110,6 +147,7 @@ struct QuickAddPanel: View {
                 if showListSuggestions {
                     listSuggestionsDropdown
                 } else {
+                    descriptionField
                     headerControls
                 }
                 if let error = tasksService.error {
@@ -123,7 +161,7 @@ struct QuickAddPanel: View {
             Divider()
             taskListSection
         }
-        .frame(minWidth: 460, maxWidth: .infinity, minHeight: 420, maxHeight: .infinity)
+        .frame(minWidth: 540, maxWidth: .infinity, minHeight: 420, maxHeight: .infinity)
         .background(.regularMaterial)
         .clipShape(RoundedRectangle(cornerRadius: Theme.radiusL, style: .continuous))
         .overlay(
@@ -137,9 +175,41 @@ struct QuickAddPanel: View {
         .onChange(of: panelFilter) { saveLastUsed($0) }
         .onExitCommand { handleEscape() }
         .task { await tasksService.fetchTaskLists() }
+        .alert("Rename list", isPresented: Binding(
+            get: { renamingList != nil },
+            set: { if !$0 { renamingList = nil } }
+        )) {
+            TextField("List name", text: $renameText)
+            Button("Rename") {
+                let t = renameText.trimmingCharacters(in: .whitespaces)
+                if let list = renamingList, !t.isEmpty {
+                    Task { await tasksService.renameList(list, to: t) }
+                }
+                renamingList = nil
+            }
+            Button("Cancel", role: .cancel) { renamingList = nil }
+        }
+        .alert("New list", isPresented: $showNewList) {
+            TextField("List name", text: $newListText)
+            Button("Create") {
+                let t = newListText.trimmingCharacters(in: .whitespaces)
+                if !t.isEmpty { Task { await tasksService.createList(title: t) } }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
     }
 
-    // MARK: - Header controls (date chips + add)
+    // MARK: - Description (optional, markdown-friendly)
+
+    private var descriptionField: some View {
+        TextField("Description (optional · markdown)", text: $draft.notes, axis: .vertical)
+            .textFieldStyle(.plain)
+            .font(.system(size: 13))
+            .foregroundStyle(.secondary)
+            .lineLimit(1...4)
+    }
+
+    // MARK: - Header controls (date chips + list selector + add)
 
     private var headerControls: some View {
         HStack(spacing: Theme.spaceS) {
@@ -162,6 +232,8 @@ struct QuickAddPanel: View {
                 parsedChip(text: dueLabel(due), system: "calendar", color: Theme.dateChip, soft: Theme.dateChipSoft)
             }
 
+            listSelectorChip
+
             Spacer()
 
             Button("Add task") { submit() }
@@ -169,6 +241,37 @@ struct QuickAddPanel: View {
                 .disabled(!canSubmit)
                 .keyboardShortcut(.return, modifiers: .command)
         }
+    }
+
+    /// List selector chip — pick the target list by click (alternative to `#`).
+    private var listSelectorChip: some View {
+        let active = draft.listId != nil || resolvedList != nil
+        let warn = unmatchedListToken
+        let tint: Color = warn ? Theme.danger : (active ? Theme.accent : .secondary)
+        return Menu {
+            ForEach(tasksService.taskLists) { list in
+                Button(list.title) { draft.listId = list.id }
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: warn ? "questionmark.circle" : "list.bullet").font(.system(size: 11))
+                Text(warn ? "#\(parsed.listName!)?" : currentListName)
+                    .font(.system(size: 12, weight: .medium))
+                    .lineLimit(1)
+            }
+            .padding(.horizontal, Theme.spaceM)
+            .padding(.vertical, 5)
+            .background(Capsule().fill(warn ? Theme.danger.opacity(0.14) : (active ? Theme.accentSoft : Color.clear)))
+            .overlay(Capsule().strokeBorder(Color.primary.opacity(active || warn ? 0 : 0.15), lineWidth: 1))
+        }
+        .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+        .foregroundStyle(tint)
+        .help(warn ? "No list named “\(parsed.listName!)” — pick one" : "Target list")
+    }
+
+    private var currentListName: String {
+        if let id = effectiveListId { return tasksService.listTitle(for: id) ?? "List" }
+        return "List"
     }
 
     // MARK: - Date picker popover
@@ -205,7 +308,15 @@ struct QuickAddPanel: View {
                             filterTab(list.title, icon: nil, isSelected: panelFilter == .list(list.id)) {
                                 panelFilter = .list(list.id)
                             }
+                            .contextMenu { listMenu(list) }
                         }
+                        Button { newListText = ""; showNewList = true } label: {
+                            Image(systemName: "plus").font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                                .padding(.horizontal, Theme.spaceS).padding(.vertical, 5)
+                        }
+                        .buttonStyle(.plain)
+                        .help("New list")
                     }
                     .padding(.leading, Theme.spaceM)
                 }
@@ -264,6 +375,23 @@ struct QuickAddPanel: View {
         .buttonStyle(.plain)
     }
 
+    /// Right-click options on a list tab / section header.
+    @ViewBuilder
+    private func listMenu(_ list: TaskList) -> some View {
+        Button("Rename…") { renamingList = list; renameText = list.title }
+        if tasksService.canMoveList(list, by: -1) {
+            Button { tasksService.moveList(list, by: -1) } label: { Label("Move left", systemImage: "arrow.left") }
+        }
+        if tasksService.canMoveList(list, by: 1) {
+            Button { tasksService.moveList(list, by: 1) } label: { Label("Move right", systemImage: "arrow.right") }
+        }
+        Divider()
+        Button(role: .destructive) {
+            if panelFilter == .list(list.id) { panelFilter = .today }
+            Task { await tasksService.deleteList(list) }
+        } label: { Label("Delete list", systemImage: "trash") }
+    }
+
     // MARK: - Controls (sort + refresh + ⋯), parity with the popover
 
     private var controlsCluster: some View {
@@ -283,7 +411,11 @@ struct QuickAddPanel: View {
                 }
                 if panelFilter.isSmart {
                     Divider()
-                    Toggle("Group by list", isOn: $groupByList)
+                    Button {
+                        groupByList.toggle()
+                    } label: {
+                        Label("Group by list", systemImage: groupByList ? "checkmark" : "rectangle.3.group")
+                    }
                 }
             } label: {
                 Image(systemName: "arrow.up.arrow.down").font(.system(size: 12))
@@ -293,14 +425,11 @@ struct QuickAddPanel: View {
 
             if tasksService.isLoading {
                 ProgressView().controlSize(.mini)
-            } else {
-                Button { Task { await tasksService.fetchTaskLists() } } label: {
-                    Image(systemName: "arrow.clockwise").font(.system(size: 12))
-                }
-                .buttonStyle(.plain).foregroundStyle(.secondary)
             }
 
             Menu {
+                Button("Refresh now") { Task { await tasksService.fetchTaskLists() } }
+                Divider()
                 if let email = authService.userEmail {
                     Section(email) {
                         Button("Settings...") { NotificationCenter.default.post(name: .openSettings, object: nil) }
@@ -378,6 +507,12 @@ struct QuickAddPanel: View {
         .padding(.horizontal, Theme.spaceM)
         .padding(.top, Theme.spaceM)
         .padding(.bottom, Theme.spaceXS)
+        .contentShape(Rectangle())
+        .contextMenu {
+            if let list = tasksService.taskLists.first(where: { $0.id == listId }) {
+                listMenu(list)
+            }
+        }
     }
 
     // MARK: - Name
@@ -446,6 +581,8 @@ struct QuickAddPanel: View {
         } label: {
             Text(label)
                 .font(.system(size: 13, weight: .medium))
+                .lineLimit(1)
+                .fixedSize()
                 .padding(.horizontal, Theme.spaceM)
                 .padding(.vertical, 5)
         }
@@ -457,6 +594,7 @@ struct QuickAddPanel: View {
         .overlay(
             Capsule().strokeBorder(Color.primary.opacity(isSelected ? 0 : 0.15), lineWidth: 1)
         )
+        .fixedSize()
     }
 
     private func parsedChip(text: String, system: String, color: Color, soft: Color) -> some View {
@@ -476,9 +614,10 @@ struct QuickAddPanel: View {
         guard canSubmit, let listId = effectiveListId else { return }
         let title = parsed.title
         let due = effectiveDueDate
+        let notes = draft.notes.trimmingCharacters(in: .whitespacesAndNewlines)
 
         Task {
-            await tasksService.addTask(title: title, due: due, to: listId)
+            await tasksService.addTask(title: title, notes: notes.isEmpty ? nil : notes, due: due, to: listId)
         }
 
         // Keep the panel open so the user can keep adding / reviewing.

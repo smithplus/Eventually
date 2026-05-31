@@ -1,23 +1,6 @@
 import SwiftUI
 
-struct PopoverView: View {
-    @EnvironmentObject var authService: AuthService
-    @EnvironmentObject var tasksService: GoogleTasksService
-    @EnvironmentObject var shortcutManager: ShortcutManager
-
-    var body: some View {
-        Group {
-            if authService.isAuthenticated {
-                TasksView()
-            } else {
-                LoginView()
-            }
-        }
-        .frame(width: 400)
-    }
-}
-
-// MARK: - Login View
+// MARK: - Login View (shown inside the Command Window when signed out)
 
 struct LoginView: View {
     @EnvironmentObject var authService: AuthService

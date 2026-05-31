@@ -6,7 +6,6 @@ import Combine
 @MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
-    var popover: NSPopover?
 
     let authService = AuthService()
     let tasksService = GoogleTasksService()
@@ -37,6 +36,27 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         ) { [weak self] _ in
             Task { @MainActor in self?.updateBadge() }
         }
+        NotificationCenter.default.addObserver(
+            forName: .autoRefreshChanged, object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.setupAutoRefresh() }
+        }
+        setupAutoRefresh()
+    }
+
+    private var refreshTimer: Timer?
+
+    /// Periodically refresh while signed in, per the Settings interval (0 = off).
+    private func setupAutoRefresh() {
+        refreshTimer?.invalidate()
+        let minutes = UserDefaults.standard.object(forKey: DefaultsKey.autoRefreshMinutes) as? Int ?? 15
+        guard minutes > 0 else { return }
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: Double(minutes) * 60, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, self.authService.isAuthenticated else { return }
+                await self.tasksService.fetchTaskLists()
+            }
+        }
     }
 
     /// Show today's task count (overdue + due today) next to the icon, if enabled.
@@ -50,48 +70,36 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Menu Bar
 
     private func setupMenuBar() {
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-
-        if let button = statusItem?.button {
-            button.image = NSImage(systemSymbolName: "checklist", accessibilityDescription: "Eventually")
-            button.image?.isTemplate = true
-            button.action = #selector(openPrimary)
-            button.target = self
+        NotificationCenter.default.addObserver(
+            forName: .menuBarIconSettingChanged, object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.refreshMenuBarIcon() }
         }
-
-        // The popover now serves a single purpose: signing in. Once authed,
-        // everything happens in the Command Window.
-        let popoverView = PopoverView()
-            .environmentObject(authService)
-            .environmentObject(tasksService)
-            .environmentObject(shortcutManager)
-
-        popover = NSPopover()
-        popover?.contentSize = NSSize(width: 360, height: 320)
-        popover?.behavior = .transient
-        popover?.animates = true
-        popover?.contentViewController = NSHostingController(rootView: popoverView)
+        refreshMenuBarIcon()
     }
 
-    /// Single entry point: the Command Window when signed in, the login
-    /// popover otherwise. Wired to the menu bar icon and the global shortcut.
+    /// Show or hide the status item per the Settings toggle. Hidden by choice
+    /// still leaves the global shortcut (⌘⇧O) working.
+    private func refreshMenuBarIcon() {
+        let show = UserDefaults.standard.object(forKey: DefaultsKey.showMenuBarIcon) as? Bool ?? true
+        if show, statusItem == nil {
+            let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+            item.button?.image = NSImage(systemSymbolName: "checklist", accessibilityDescription: "Eventually")
+            item.button?.image?.isTemplate = true
+            item.button?.action = #selector(openPrimary)
+            item.button?.target = self
+            statusItem = item
+            updateBadge()
+        } else if !show, let item = statusItem {
+            NSStatusBar.system.removeStatusItem(item)
+            statusItem = nil
+        }
+    }
+
+    /// Single entry point — the Command Window (which itself shows login when
+    /// signed out). Wired to the menu bar icon and the global shortcut.
     @objc func openPrimary() {
-        if authService.isAuthenticated {
-            quickAdd.toggle()
-        } else {
-            showLoginPopover()
-        }
-    }
-
-    private func showLoginPopover() {
-        guard let button = statusItem?.button else { return }
-        if popover?.isShown == true {
-            popover?.performClose(nil)
-        } else {
-            popover?.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-            NSApp.activate(ignoringOtherApps: true)
-            popover?.contentViewController?.view.window?.makeKey()
-        }
+        quickAdd.toggle()
     }
 
     // MARK: - Global Shortcuts
@@ -107,6 +115,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 extension Notification.Name {
     static let openSettings = Notification.Name("openSettings")
     static let badgeSettingChanged = Notification.Name("badgeSettingChanged")
+    static let autoRefreshChanged = Notification.Name("autoRefreshChanged")
+    static let menuBarIconSettingChanged = Notification.Name("menuBarIconSettingChanged")
 }
 
 // MARK: - Appearance

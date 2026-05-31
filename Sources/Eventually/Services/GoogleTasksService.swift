@@ -23,6 +23,7 @@ class GoogleTasksService: ObservableObject {
             let data = try await get("/users/@me/lists", token: token)
             let response = try JSONDecoder().decode(TaskListResponse.self, from: data)
             taskLists = response.items ?? []
+            applyLocalOrder()
 
             // Fetch tasks for all lists
             await withTaskGroup(of: Void.self) { group in
@@ -35,6 +36,68 @@ class GoogleTasksService: ObservableObject {
         }
 
         isLoading = false
+    }
+
+    // MARK: - List CRUD
+
+    func createList(title: String) async {
+        guard let token = await authService?.validAccessToken() else { return }
+        do {
+            let data = try await post("/users/@me/lists", body: ["title": title], token: token)
+            let list = try JSONDecoder().decode(TaskList.self, from: data)
+            taskLists.append(list)
+            tasks[list.id] = []
+        } catch {
+            self.error = error.localizedDescription
+        }
+    }
+
+    func renameList(_ list: TaskList, to title: String) async {
+        guard let token = await authService?.validAccessToken() else { return }
+        do {
+            let data = try await patch("/users/@me/lists/\(list.id)", body: ["title": title], token: token)
+            let updated = try JSONDecoder().decode(TaskList.self, from: data)
+            if let idx = taskLists.firstIndex(where: { $0.id == list.id }) {
+                taskLists[idx] = updated
+            }
+        } catch {
+            self.error = error.localizedDescription
+        }
+    }
+
+    func deleteList(_ list: TaskList) async {
+        guard let token = await authService?.validAccessToken() else { return }
+        do {
+            try await delete("/users/@me/lists/\(list.id)", token: token)
+            taskLists.removeAll { $0.id == list.id }
+            tasks[list.id] = nil
+        } catch {
+            self.error = error.localizedDescription
+        }
+    }
+
+    /// Reorder a list locally (the API doesn't expose list ordering). The order
+    /// is persisted and reapplied on every fetch.
+    func moveList(_ list: TaskList, by offset: Int) {
+        guard let idx = taskLists.firstIndex(where: { $0.id == list.id }) else { return }
+        let target = idx + offset
+        guard target >= 0, target < taskLists.count else { return }
+        taskLists.swapAt(idx, target)
+        UserDefaults.standard.set(taskLists.map(\.id), forKey: DefaultsKey.listOrder)
+    }
+
+    func canMoveList(_ list: TaskList, by offset: Int) -> Bool {
+        guard let idx = taskLists.firstIndex(where: { $0.id == list.id }) else { return false }
+        let target = idx + offset
+        return target >= 0 && target < taskLists.count
+    }
+
+    private func applyLocalOrder() {
+        let order = UserDefaults.standard.stringArray(forKey: DefaultsKey.listOrder) ?? []
+        guard !order.isEmpty else { return }
+        taskLists.sort {
+            (order.firstIndex(of: $0.id) ?? Int.max) < (order.firstIndex(of: $1.id) ?? Int.max)
+        }
     }
 
     func fetchTasks(for listId: String) async {
@@ -81,7 +144,11 @@ class GoogleTasksService: ObservableObject {
         }
     }
 
-    @Published var sortOrder: SortOrder = .myOrder
+    @Published var sortOrder: SortOrder = SortOrder(
+        rawValue: UserDefaults.standard.string(forKey: DefaultsKey.sortOrder) ?? ""
+    ) ?? .myOrder {
+        didSet { UserDefaults.standard.set(sortOrder.rawValue, forKey: DefaultsKey.sortOrder) }
+    }
 
     /// Returns the list's tasks in display order, honoring `sortOrder`.
     /// Only "My order" nests subtasks under parents; the other sorts flatten.

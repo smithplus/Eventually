@@ -8,15 +8,18 @@ import SwiftUI
 @MainActor
 final class QuickAddDraft: ObservableObject {
     @Published var name = ""
+    @Published var notes = ""
     @Published var dueDate: Date?
     @Published var listId: String?
 
     var isEmpty: Bool {
         name.trimmingCharacters(in: .whitespaces).isEmpty
+            && notes.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
     func clear() {
         name = ""
+        notes = ""
         dueDate = nil
         listId = nil
     }
@@ -48,10 +51,8 @@ final class QuickAddWindowController {
         // Remember who was active so we can hand focus back on close.
         previousApp = NSWorkspace.shared.frontmostApplication
 
-        // Make sure lists are loaded so the # selector works
-        Task { await tasksService.fetchTaskLists() }
-
-        let content = QuickAddPanel(onClose: { [weak self] in self?.close(restoreFocus: true) })
+        // Lists are fetched by the panel's .task on appear — no duplicate here.
+        let content = CommandRoot(onClose: { [weak self] in self?.close(restoreFocus: true) })
             .environmentObject(authService)
             .environmentObject(tasksService)
             .environmentObject(draft)
@@ -102,7 +103,7 @@ final class QuickAddWindowController {
         self.panel = panel
     }
 
-    private static let minSize = NSSize(width: 460, height: 360)
+    private static let minSize = NSSize(width: 540, height: 360)
     private static let screenMargin: CGFloat = 16
 
     private var screenFrame: NSRect {

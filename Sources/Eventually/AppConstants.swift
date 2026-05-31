@@ -14,6 +14,10 @@ enum DefaultsKey {
     static let launchAtLogin = "launchAtLogin"
     static let showBadgeCount = "showBadgeCount"
     static let groupByList = "groupByList"
+    static let autoRefreshMinutes = "autoRefreshMinutes"
+    static let listOrder = "listOrder"
+    static let sortOrder = "sortOrder"
+    static let showMenuBarIcon = "showMenuBarIcon"
 }
 
 /// App appearance preference, shared by the Settings picker and the applier.
