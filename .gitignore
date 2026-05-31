@@ -1,0 +1,28 @@
+# Xcode
+*.xcuserstate
+xcuserdata/
+*.moved-aside
+*.xccheckout
+*.xcscmblueprint
+DerivedData/
+build/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Swift Package Manager
+.build/
+*.resolved
+
+# Xcode user data
+*.xcuserstate
+xcuserdata/
+**/.xcuserdata/
+
+# Credentials - NEVER commit
+Sources/Eventually/Config.swift
+
+# Old project folder
+TaskBar.xcodeproj/

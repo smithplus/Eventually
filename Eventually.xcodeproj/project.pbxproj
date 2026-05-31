@@ -1,0 +1,475 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0180B6FF3AF4E8BCBBFD1BF9 /* TaskModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74FFCA547C60B571E13CE40D /* TaskModels.swift */; };
+		22D84C174F9DB1CC894B69A4 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B9392E107C5BF578B6FFB06 /* AppDelegate.swift */; };
+		70C38DC9266521F00548E4C7 /* ShortcutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9C036A8E5F3FC19ECEBDEA3 /* ShortcutManager.swift */; };
+		8139D84924D6DC7A43D2AB8D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09C022D34494F4FA32D62690 /* SettingsView.swift */; };
+		8E86124ED6AE9442EEF7F215 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E5CE035B63564A2A4686736 /* Config.swift */; };
+		921AEED93FF69DE9D6CF85DA /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7785FD9FC6FF4B5F94A887E3 /* AuthService.swift */; };
+		A4E71FAD9A46496658047D23 /* GoogleTasksService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65B0024D67F8B4DCAA6CF4A5 /* GoogleTasksService.swift */; };
+		CB030B58A7CC72FF05C5BD9B /* TasksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87F0F9F7194563018503631D /* TasksView.swift */; };
+		E0924ACA09EEA897CF2101B9 /* TaskBarWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A18FB84432BB501D8B687FCA /* TaskBarWidget.swift */; };
+		E6DAC533697E665F6E22D506 /* TaskRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2528313113D8A00B1D2BF5C3 /* TaskRowView.swift */; };
+		F29964112358C0E265952DD5 /* PopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B71ECC3D761531BCC2228A62 /* PopoverView.swift */; };
+		F71288A3A4F4E0963F0473B1 /* EventuallyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 724BD165A7E37A793C126BEF /* EventuallyApp.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		6363DA1FA0C1331F82F8775D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 49A4BFBC674566A05527614E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 25CB51E3F5CD3B32B3FDDD1D;
+			remoteInfo = Eventually;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		09C022D34494F4FA32D62690 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		1B9392E107C5BF578B6FFB06 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		2528313113D8A00B1D2BF5C3 /* TaskRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskRowView.swift; sourceTree = "<group>"; };
+		25F6609DD047E8F54EDCE196 /* Eventually.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Eventually.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4E5CE035B63564A2A4686736 /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
+		51948592E6C1A2BC89173750 /* Eventually.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Eventually.entitlements; sourceTree = "<group>"; };
+		65B0024D67F8B4DCAA6CF4A5 /* GoogleTasksService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleTasksService.swift; sourceTree = "<group>"; };
+		724BD165A7E37A793C126BEF /* EventuallyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventuallyApp.swift; sourceTree = "<group>"; };
+		74FFCA547C60B571E13CE40D /* TaskModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskModels.swift; sourceTree = "<group>"; };
+		7785FD9FC6FF4B5F94A887E3 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		87F0F9F7194563018503631D /* TasksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasksView.swift; sourceTree = "<group>"; };
+		A18FB84432BB501D8B687FCA /* TaskBarWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskBarWidget.swift; sourceTree = "<group>"; };
+		A9C036A8E5F3FC19ECEBDEA3 /* ShortcutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutManager.swift; sourceTree = "<group>"; };
+		B71ECC3D761531BCC2228A62 /* PopoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverView.swift; sourceTree = "<group>"; };
+		D3BC96A3E458342D714274B1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		FC5E53FAFBD0E63AAFC3CF07 /* EventuallyWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = EventuallyWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		FF3089A445FC67D2BAF76401 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		4A1C0FFDC0E11B0715E2FF86 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				B71ECC3D761531BCC2228A62 /* PopoverView.swift */,
+				09C022D34494F4FA32D62690 /* SettingsView.swift */,
+				2528313113D8A00B1D2BF5C3 /* TaskRowView.swift */,
+				87F0F9F7194563018503631D /* TasksView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		51E20CC99FD8AF102E59DB50 = {
+			isa = PBXGroup;
+			children = (
+				8C7828199FA585BE8BA59DD3 /* Eventually */,
+				B8CF116466BE365F88E43193 /* EventuallyWidget */,
+				F520D5E2F288A04883BC0E08 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		8C7828199FA585BE8BA59DD3 /* Eventually */ = {
+			isa = PBXGroup;
+			children = (
+				1B9392E107C5BF578B6FFB06 /* AppDelegate.swift */,
+				4E5CE035B63564A2A4686736 /* Config.swift */,
+				51948592E6C1A2BC89173750 /* Eventually.entitlements */,
+				724BD165A7E37A793C126BEF /* EventuallyApp.swift */,
+				FF3089A445FC67D2BAF76401 /* Info.plist */,
+				A9C036A8E5F3FC19ECEBDEA3 /* ShortcutManager.swift */,
+				F18569FC5E0601F4823583C5 /* Models */,
+				DAED7DA66F1BADE3DD1BEA8F /* Services */,
+				4A1C0FFDC0E11B0715E2FF86 /* Views */,
+			);
+			name = Eventually;
+			path = Sources/Eventually;
+			sourceTree = "<group>";
+		};
+		B8CF116466BE365F88E43193 /* EventuallyWidget */ = {
+			isa = PBXGroup;
+			children = (
+				D3BC96A3E458342D714274B1 /* Info.plist */,
+				A18FB84432BB501D8B687FCA /* TaskBarWidget.swift */,
+			);
+			name = EventuallyWidget;
+			path = Sources/EventuallyWidget;
+			sourceTree = "<group>";
+		};
+		DAED7DA66F1BADE3DD1BEA8F /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				7785FD9FC6FF4B5F94A887E3 /* AuthService.swift */,
+				65B0024D67F8B4DCAA6CF4A5 /* GoogleTasksService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		F18569FC5E0601F4823583C5 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				74FFCA547C60B571E13CE40D /* TaskModels.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		F520D5E2F288A04883BC0E08 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				25F6609DD047E8F54EDCE196 /* Eventually.app */,
+				FC5E53FAFBD0E63AAFC3CF07 /* EventuallyWidget.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		25CB51E3F5CD3B32B3FDDD1D /* Eventually */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 58AABD5D36D01A264D267A95 /* Build configuration list for PBXNativeTarget "Eventually" */;
+			buildPhases = (
+				0CF77CE10E93EDE62DA06867 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Eventually;
+			packageProductDependencies = (
+			);
+			productName = Eventually;
+			productReference = 25F6609DD047E8F54EDCE196 /* Eventually.app */;
+			productType = "com.apple.product-type.application";
+		};
+		2C1E4FB096287079C63E36B9 /* EventuallyWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5D02A395AFCC7F4346BA1A1F /* Build configuration list for PBXNativeTarget "EventuallyWidget" */;
+			buildPhases = (
+				188C8466557D7D98C8A0659A /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				FD8835A8690CA92F25FF75F3 /* PBXTargetDependency */,
+			);
+			name = EventuallyWidget;
+			packageProductDependencies = (
+			);
+			productName = EventuallyWidget;
+			productReference = FC5E53FAFBD0E63AAFC3CF07 /* EventuallyWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		49A4BFBC674566A05527614E /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					25CB51E3F5CD3B32B3FDDD1D = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+					2C1E4FB096287079C63E36B9 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = C9553019BB5454254C4241C3 /* Build configuration list for PBXProject "Eventually" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 51E20CC99FD8AF102E59DB50;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				864ADD11C136458F204DD370 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = F520D5E2F288A04883BC0E08 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				25CB51E3F5CD3B32B3FDDD1D /* Eventually */,
+				2C1E4FB096287079C63E36B9 /* EventuallyWidget */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0CF77CE10E93EDE62DA06867 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				22D84C174F9DB1CC894B69A4 /* AppDelegate.swift in Sources */,
+				921AEED93FF69DE9D6CF85DA /* AuthService.swift in Sources */,
+				8E86124ED6AE9442EEF7F215 /* Config.swift in Sources */,
+				F71288A3A4F4E0963F0473B1 /* EventuallyApp.swift in Sources */,
+				A4E71FAD9A46496658047D23 /* GoogleTasksService.swift in Sources */,
+				F29964112358C0E265952DD5 /* PopoverView.swift in Sources */,
+				8139D84924D6DC7A43D2AB8D /* SettingsView.swift in Sources */,
+				70C38DC9266521F00548E4C7 /* ShortcutManager.swift in Sources */,
+				0180B6FF3AF4E8BCBBFD1BF9 /* TaskModels.swift in Sources */,
+				E6DAC533697E665F6E22D506 /* TaskRowView.swift in Sources */,
+				CB030B58A7CC72FF05C5BD9B /* TasksView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		188C8466557D7D98C8A0659A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E0924ACA09EEA897CF2101B9 /* TaskBarWidget.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		FD8835A8690CA92F25FF75F3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 25CB51E3F5CD3B32B3FDDD1D /* Eventually */;
+			targetProxy = 6363DA1FA0C1331F82F8775D /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		129C1A00CFDAB919F7A341E2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Sources/Eventually/Eventually.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = Sources/Eventually/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				PRODUCT_NAME = Eventually;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		2CD948F3D02DC6654F91DB40 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Sources/Eventually/Eventually.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = Sources/Eventually/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				PRODUCT_NAME = Eventually;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		2EB7EDBD914449CBF91FEC70 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = Sources/Eventually/Eventually.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = Sources/Eventually/Info.plist;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = app.tabella.Eventually;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		6AB6BBA82AB61FCED21B2BD5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = Sources/EventuallyWidget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../../../Frameworks @executable_path/../Frameworks";
+				PRODUCT_NAME = EventuallyWidget;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		6D608EBD270C77EF437DA36E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = Sources/Eventually/Eventually.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = Sources/Eventually/Info.plist;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = app.tabella.Eventually;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		E31627BD22A2B01C73A345A5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = Sources/EventuallyWidget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../../../../Frameworks @executable_path/../Frameworks";
+				PRODUCT_NAME = EventuallyWidget;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		58AABD5D36D01A264D267A95 /* Build configuration list for PBXNativeTarget "Eventually" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2CD948F3D02DC6654F91DB40 /* Debug */,
+				129C1A00CFDAB919F7A341E2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		5D02A395AFCC7F4346BA1A1F /* Build configuration list for PBXNativeTarget "EventuallyWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E31627BD22A2B01C73A345A5 /* Debug */,
+				6AB6BBA82AB61FCED21B2BD5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		C9553019BB5454254C4241C3 /* Build configuration list for PBXProject "Eventually" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6D608EBD270C77EF437DA36E /* Debug */,
+				2EB7EDBD914449CBF91FEC70 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		864ADD11C136458F204DD370 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.2.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+	};
+	rootObject = 49A4BFBC674566A05527614E /* Project object */;
+}
