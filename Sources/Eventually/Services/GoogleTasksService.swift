@@ -769,13 +769,11 @@ class GoogleTasksService: ObservableObject {
                     return t
                 }
 
-                // Only show active (non-completed) instances
-                // (completed tasks are filtered out in fetchTasks)
+                // Show ALL active instances (user may have multiple real tasks with same title).
+                // Only the recurring badge metadata is applied — no tasks are dropped.
                 let activeMarked = marked.filter { !$0.isCompleted }
-                if let first = activeMarked.first {
-                    result.append(first)
-                }
-                // Also add any instances without dates
+                result.append(contentsOf: activeMarked)
+                // Also add any instances without dates (not yet scheduled)
                 result.append(contentsOf: instances.filter { $0.dueDay == nil && $0.completed == nil })
             } else {
                 // Not a regular pattern → show all

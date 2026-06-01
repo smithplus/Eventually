@@ -60,6 +60,9 @@ struct QuickAddPanel: View {
     @State private var expandedTaskID: String? = nil
     private var isAnyTaskBeingEdited: Bool { expandedTaskID != nil }
 
+    // Drag & drop reorder
+    @State private var dropTargetID: String? = nil
+
     /// The flat sequence of task rows currently visible (respects grouping and
     /// collapsed sections) — the order keyboard navigation walks.
     /// ONLY includes active (incomplete) tasks for navigation purposes.
@@ -741,12 +744,24 @@ struct QuickAddPanel: View {
                         }
                     } else {
                         // No grouping: show both badges + drag to reorder (only in single-list "My Order" view)
-                        ForEach(activeTasks) { taskRow($0, showListBadge: panelFilter.isSmart || showSearch, showDateBadge: true)
-                            .id($0.task.id)
-                            .draggable($0.task.id)
-                        }
-                        .dropDestination(for: String.self) { droppedIDs, location in
-                            handleReorder(droppedIDs: droppedIDs, in: activeTasks)
+                        ForEach(activeTasks) { ordered in
+                            taskRow(ordered, showListBadge: panelFilter.isSmart || showSearch, showDateBadge: true)
+                                .id(ordered.task.id)
+                                .draggable(ordered.task.id)
+                                // Each row is its own drop target — gives precise insertion point
+                                .dropDestination(for: String.self) { droppedIDs, _ in
+                                    handleReorder(droppedIDs: droppedIDs, before: ordered.task.id, in: activeTasks)
+                                } isTargeted: { isOver in
+                                    dropTargetID = isOver ? ordered.task.id : nil
+                                }
+                                .overlay(alignment: .top) {
+                                    if dropTargetID == ordered.task.id {
+                                        Rectangle()
+                                            .fill(Color.accentColor)
+                                            .frame(height: 2)
+                                            .transition(.opacity)
+                                    }
+                                }
                         }
                     }
 
@@ -964,18 +979,21 @@ struct QuickAddPanel: View {
         nameFocused = true
     }
 
-    /// Handle drag-to-reorder drop: move the dragged task after the task at the drop location.
+    /// Handle drag-to-reorder drop: move the dragged task to just before `targetID`.
     @discardableResult
-    private func handleReorder(droppedIDs: [String], in rows: [GoogleTasksService.OrderedTask]) -> Bool {
+    private func handleReorder(droppedIDs: [String], before targetID: String, in rows: [GoogleTasksService.OrderedTask]) -> Bool {
         guard let draggedID = droppedIDs.first,
+              draggedID != targetID,
               let draggedRow = rows.first(where: { $0.task.id == draggedID }),
-              let draggedIndex = rows.firstIndex(where: { $0.task.id == draggedID }) else { return false }
+              let targetIndex = rows.firstIndex(where: { $0.task.id == targetID }) else { return false }
 
-        // Drop at end: move after the last task
-        let targetIndex = rows.count - 1
-        guard targetIndex != draggedIndex else { return false }
+        dropTargetID = nil
 
-        let previousTaskId = targetIndex > 0 ? rows[targetIndex].task.id : nil
+        // The task should go BEFORE the target — so it comes after the task preceding the target
+        let previousTaskId = targetIndex > 0 ? rows[targetIndex - 1].task.id : nil
+        // Don't move if already in that position
+        if let prev = previousTaskId, prev == draggedID { return false }
+
         Task { await tasksService.reorderTask(draggedRow.task, afterTaskId: previousTaskId) }
         return true
     }

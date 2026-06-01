@@ -163,11 +163,15 @@ class AuthService: NSObject, ObservableObject {
         if let token = accessToken, let expiry = tokenExpiry, expiry > Date().addingTimeInterval(5) {
             return token
         }
-        // Atomic check-and-create to prevent race
+        // Coalesce concurrent refresh requests: create exactly one Task,
+        // all callers await the same Task then read the updated accessToken.
+        // Capture a local reference before awaiting to prevent force-unwrap crash
+        // if another caller nils out refreshInFlight between our check and our await.
         if refreshInFlight == nil {
             refreshInFlight = Task { await self.refreshAccessToken() }
         }
-        await refreshInFlight!.value
+        let inFlight = refreshInFlight
+        await inFlight?.value
         refreshInFlight = nil
         return accessToken
     }

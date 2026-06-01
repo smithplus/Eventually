@@ -434,11 +434,18 @@ struct TaskRowView: View {
     }
 
     private func applyWrap(_ wrap: String, to text: String) -> String {
-        // If text ends with the wrap markers, toggle them off
-        let marker = wrap + wrap
-        if text.contains(marker) {
-            return text.replacingOccurrences(of: marker, with: "")
+        // If text already ends with the closing marker, we're toggling off — strip both markers.
+        // We check for the single marker (e.g. "**"), not doubled, because real content sits between them.
+        if text.hasSuffix(wrap) && text.contains(wrap) {
+            // Remove the trailing marker and the leading marker from the last occurrence
+            if let range = text.range(of: wrap, options: .backwards) {
+                let withoutTrailing = String(text[..<range.lowerBound])
+                if let leadingRange = withoutTrailing.range(of: wrap, options: .backwards) {
+                    return String(withoutTrailing[..<leadingRange.lowerBound]) + String(withoutTrailing[leadingRange.upperBound...])
+                }
+            }
         }
+        // Append opening + closing markers (cursor lands between them)
         return text + wrap + wrap
     }
 

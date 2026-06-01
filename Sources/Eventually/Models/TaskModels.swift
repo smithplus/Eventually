@@ -69,10 +69,37 @@ struct GTask: Identifiable, Codable, Hashable {
     enum TaskStatus: String, Codable {
         case needsAction = "needsAction"
         case completed = "completed"
+
+        // Resilient decode: unknown future Google status values fall back to needsAction
+        // instead of throwing and breaking the entire list fetch.
+        init(from decoder: Decoder) throws {
+            let raw = try decoder.singleValueContainer().decode(String.self)
+            self = TaskStatus(rawValue: raw) ?? .needsAction
+        }
     }
 
     enum CodingKeys: String, CodingKey {
         case id, title, notes, status, due, completed, parent, position
+        // NOTE: isRecurring and recurrencePattern are intentionally excluded —
+        // they are computed locally by GoogleTasksService and never stored in Google's API.
+        // An explicit encode(to:) below ensures they are never serialized to any cache.
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(title, forKey: .title)
+        try container.encodeIfPresent(notes, forKey: .notes)
+        try container.encode(status, forKey: .status)
+        try container.encodeIfPresent(parent, forKey: .parent)
+        try container.encodeIfPresent(position, forKey: .position)
+        // Dates stored as ISO8601 strings
+        if let due {
+            try container.encode(ISO8601DateFormatter().string(from: due), forKey: .due)
+        }
+        if let completed {
+            try container.encode(ISO8601DateFormatter().string(from: completed), forKey: .completed)
+        }
     }
 
     init(from decoder: Decoder) throws {
