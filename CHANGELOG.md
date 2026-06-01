@@ -9,6 +9,12 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 > - **Popover** — the menu-bar dropdown opened with ⌘⇧T (compact, transient).
 > - **Command Window** — the floating window opened with ⌘⇧O (full input + tabs + task list). This is becoming the primary surface.
 
+### Added (keyboard nav + multi-select)
+- **Tab moves focus from the input to the task list** (when no autocomplete dropdown is open; with one, Tab still accepts the suggestion).
+- **List navigation**: ↑/↓ move a cursor (highlighted row), Space toggles selection, Return completes, Delete removes, ⌘A selects all, Esc/Tab returns to the input. ⌘-click also toggles a row's selection.
+- **Multi-select bulk action bar**: Complete, Delete, set Date (Today/Tomorrow/Pick…/Clear), and Move to list — applied to all selected tasks at once.
+- Cursor/selection reset and prune to visible rows when the filter, search, or grouping changes (no stale cursor or off-list selection).
+
 ### Changed (refinement)
 - **Context-aware empty states**: distinct icon/message for loading, no lists yet, no search matches, and each empty view (Today "All clear", Upcoming, All, a named list).
 - **Stale error banner clears on success**: any successful request clears the error; failures re-set it.

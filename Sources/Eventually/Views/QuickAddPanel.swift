@@ -47,6 +47,37 @@ struct QuickAddPanel: View {
     @State private var collapsedGroups: Set<String> = []
     @State private var suggestionIndex = 0
 
+    // Keyboard navigation of the task list + multi-select.
+    @FocusState private var listFocused: Bool
+    @State private var cursorIndex = 0
+    @State private var selectedTaskIDs: Set<String> = []
+    @State private var showBulkDatePicker = false
+    @State private var bulkDate = Date()
+
+    /// The flat sequence of task rows currently visible (respects grouping and
+    /// collapsed sections) — the order keyboard navigation walks.
+    private var visibleRows: [GoogleTasksService.OrderedTask] {
+        if isGroupedByDate {
+            return tasksService.groupedByDate(displayRows).flatMap {
+                collapsedGroups.contains("date:" + $0.key) ? [] : $0.rows
+            }
+        } else if isGroupedByList {
+            return tasksService.grouped(displayRows).flatMap {
+                collapsedGroups.contains($0.listId) ? [] : $0.rows
+            }
+        }
+        return displayRows
+    }
+
+    /// Tasks currently selected AND visible (selection is pruned on view change).
+    private var selectedTasks: [GTask] {
+        visibleRows.map(\.task).filter { selectedTaskIDs.contains($0.id) }
+    }
+
+    private var cursorTask: GTask? {
+        visibleRows.indices.contains(cursorIndex) ? visibleRows[cursorIndex].task : nil
+    }
+
     /// Which tasks are shown below the input.
     @State private var panelFilter: GoogleTasksService.Selection = .today
 
@@ -226,6 +257,10 @@ struct QuickAddPanel: View {
             filterToolbar
             Divider()
             taskListSection
+            if !selectedTasks.isEmpty {
+                Divider()
+                bulkActionBar
+            }
         }
         .frame(minWidth: 540, maxWidth: .infinity, minHeight: 420, maxHeight: .infinity)
         .background(.regularMaterial)
@@ -238,7 +273,10 @@ struct QuickAddPanel: View {
             nameFocused = true
             panelFilter = defaultSelection()
         }
-        .onChange(of: panelFilter) { saveLastUsed($0) }
+        .onChange(of: panelFilter) { saveLastUsed($0); resetNavigation() }
+        .onChange(of: searchText) { _ in resetNavigation() }
+        .onChange(of: showSearch) { _ in resetNavigation() }
+        .onChange(of: nameFocused) { focused in if focused { listFocused = false } }
         .onExitCommand { handleEscape() }
         .task { await tasksService.fetchTaskLists() }
         .alert("Rename list", isPresented: Binding(
@@ -654,14 +692,40 @@ struct QuickAddPanel: View {
                 .padding(.bottom, Theme.spaceS)
             }
             .frame(maxHeight: .infinity)
+            .focusable()
+            .focused($listFocused)
+            .modifier(ListNavKeyHandler(
+                onUp: { cursorIndex = max(0, cursorIndex - 1) },
+                onDown: { cursorIndex = min(visibleRows.count - 1, cursorIndex + 1) },
+                onToggleSelect: { if let t = cursorTask { toggleSelection(t.id) } },
+                onComplete: { runOnTargets { await tasksService.completeTasks($0) } },
+                onDelete: { runOnTargets { await tasksService.deleteTasks($0) } },
+                onSelectAll: { selectedTaskIDs = Set(visibleRows.map(\.task.id)) },
+                onExit: { exitListNavigation() }
+            ))
         }
     }
 
     private func taskRow(_ ordered: GoogleTasksService.OrderedTask, badge: Bool) -> some View {
-        VStack(spacing: 0) {
-            TaskRowView(task: ordered.task, isChild: ordered.isChild, showListBadge: badge)
+        let isCursor = listFocused && cursorTask?.id == ordered.task.id
+        let isSelected = selectedTaskIDs.contains(ordered.task.id)
+        return VStack(spacing: 0) {
+            HStack(spacing: 0) {
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.accent)
+                        .padding(.leading, Theme.spaceS)
+                }
+                TaskRowView(task: ordered.task, isChild: ordered.isChild, showListBadge: badge)
+            }
             Divider().padding(.leading, ordered.isChild ? 64 : 40)
         }
+        .background(isCursor ? Theme.accent.opacity(0.18)
+                    : isSelected ? Theme.accent.opacity(0.08) : Color.clear)
+        .simultaneousGesture(TapGesture().modifiers(.command).onEnded {
+            toggleSelection(ordered.task.id)
+        })
     }
 
     /// Collapsible section header (used by both list and date grouping).
@@ -716,7 +780,8 @@ struct QuickAddPanel: View {
                 onShiftReturn: { notesFocused = true },
                 onUp: { moveSuggestion(-1) },
                 onDown: { moveSuggestion(1) },
-                onTab: { _ = acceptSuggestion() }
+                onAcceptSuggestion: { _ = acceptSuggestion() },
+                onTabToList: { enterListNavigation() }
             ))
             .onChange(of: draft.name) { _ in
                 suggestionIndex = 0
@@ -745,6 +810,98 @@ struct QuickAddPanel: View {
         let count = showListSuggestions ? min(listSuggestions.count, 5) : dateSuggestions.count
         guard count > 0 else { return }
         suggestionIndex = max(0, min(count - 1, suggestionIndex + delta))
+    }
+
+    // MARK: - List keyboard navigation (Tab from the input)
+
+    private func enterListNavigation() {
+        guard !visibleRows.isEmpty else { return }
+        cursorIndex = min(max(cursorIndex, 0), visibleRows.count - 1)
+        nameFocused = false
+        listFocused = true
+    }
+
+    private func exitListNavigation() {
+        clearSelection()
+        listFocused = false
+        nameFocused = true
+    }
+
+    /// Reset cursor and prune selection to visible rows when the view changes.
+    private func resetNavigation() {
+        cursorIndex = 0
+        selectedTaskIDs.formIntersection(Set(visibleRows.map(\.task.id)))
+    }
+
+    private func toggleSelection(_ id: String) {
+        if selectedTaskIDs.contains(id) { selectedTaskIDs.remove(id) } else { selectedTaskIDs.insert(id) }
+    }
+
+    private func clearSelection() { selectedTaskIDs.removeAll() }
+
+    // MARK: - Bulk action bar (multi-select)
+
+    private var bulkActionBar: some View {
+        HStack(spacing: Theme.spaceM) {
+            Text("\(selectedTasks.count) selected")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(.secondary)
+
+            Button { runOnTargets { await tasksService.completeTasks($0) } } label: {
+                Label("Complete", systemImage: "checkmark.circle")
+            }
+            Button(role: .destructive) { runOnTargets { await tasksService.deleteTasks($0) } } label: {
+                Label("Delete", systemImage: "trash")
+            }
+
+            Menu {
+                Button("Today") { runOnTargets { await tasksService.setDueDate($0, to: Calendar.current.startOfDay(for: Date())) } }
+                Button("Tomorrow") { runOnTargets { await tasksService.setDueDate($0, to: Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: Date()))) } }
+                Button("Pick date…") { showBulkDatePicker = true }
+                Divider()
+                Button("Clear date") { runOnTargets { await tasksService.setDueDate($0, to: nil) } }
+            } label: { Label("Date", systemImage: "calendar") }
+                .fixedSize()
+                .popover(isPresented: $showBulkDatePicker, arrowEdge: .bottom) {
+                    VStack(spacing: Theme.spaceS) {
+                        DatePicker("", selection: $bulkDate, displayedComponents: .date)
+                            .datePickerStyle(.graphical).labelsHidden().tint(Theme.accent)
+                        Button("Apply") {
+                            let d = Calendar.current.startOfDay(for: bulkDate)
+                            runOnTargets { await tasksService.setDueDate($0, to: d) }
+                            showBulkDatePicker = false
+                        }
+                        .buttonStyle(CapsuleButton())
+                    }
+                    .padding(Theme.spaceM).fixedSize()
+                }
+
+            if tasksService.taskLists.count > 1 {
+                Menu {
+                    ForEach(tasksService.taskLists) { list in
+                        Button(list.title) { runOnTargets { await tasksService.moveTasks($0, toList: list.id) } }
+                    }
+                } label: { Label("Move", systemImage: "tray.and.arrow.up") }
+                    .fixedSize()
+            }
+
+            Spacer()
+
+            Button("Done") { clearSelection() }
+                .foregroundStyle(.secondary)
+        }
+        .font(.system(size: 12))
+        .buttonStyle(.plain)
+        .padding(.horizontal, Theme.spaceM)
+        .padding(.vertical, Theme.spaceS)
+    }
+
+    /// Run a batch action on the current selection, or the cursor row if none.
+    private func runOnTargets(_ op: @escaping ([GTask]) async -> Void) {
+        let targets = selectedTaskIDs.isEmpty ? [cursorTask].compactMap { $0 } : selectedTasks
+        guard !targets.isEmpty else { return }
+        clearSelection()
+        Task { await op(targets) }
     }
 
     // MARK: - #list autocomplete dropdown
@@ -974,7 +1131,8 @@ private struct CommandKeyHandler: ViewModifier {
     let onShiftReturn: () -> Void
     let onUp: () -> Void
     let onDown: () -> Void
-    let onTab: () -> Void
+    let onAcceptSuggestion: () -> Void
+    let onTabToList: () -> Void
 
     func body(content: Content) -> some View {
         if #available(macOS 14.0, *) {
@@ -988,10 +1146,47 @@ private struct CommandKeyHandler: ViewModifier {
                 if suggestionsVisible, press.key == .downArrow {
                     onDown(); return .handled
                 }
-                if suggestionsVisible, press.key == .tab {
-                    onTab(); return .handled
+                if press.key == .tab {
+                    // Tab accepts an open suggestion, else moves focus to the list.
+                    if suggestionsVisible { onAcceptSuggestion() } else { onTabToList() }
+                    return .handled
                 }
                 return .ignored
+            }
+        } else {
+            content
+        }
+    }
+}
+
+/// Keyboard handling for the task list when it has focus (Tab from the input):
+/// ↑/↓ move the cursor, Space toggles selection, Return completes, Delete
+/// removes, ⌘A selects all, Esc/Tab returns to the input.
+private struct ListNavKeyHandler: ViewModifier {
+    let onUp: () -> Void
+    let onDown: () -> Void
+    let onToggleSelect: () -> Void
+    let onComplete: () -> Void
+    let onDelete: () -> Void
+    let onSelectAll: () -> Void
+    let onExit: () -> Void
+
+    func body(content: Content) -> some View {
+        if #available(macOS 14.0, *) {
+            content.onKeyPress { press in
+                switch press.key {
+                case .upArrow:   onUp(); return .handled
+                case .downArrow: onDown(); return .handled
+                case .space:     onToggleSelect(); return .handled
+                case .return:    onComplete(); return .handled
+                case .delete, .deleteForward: onDelete(); return .handled
+                case .escape, .tab: onExit(); return .handled
+                default:
+                    if press.modifiers.contains(.command), press.characters == "a" {
+                        onSelectAll(); return .handled
+                    }
+                    return .ignored
+                }
             }
         } else {
             content

@@ -341,6 +341,24 @@ class GoogleTasksService: ObservableObject {
         }
     }
 
+    // MARK: - Batch operations (multi-select)
+
+    func completeTasks(_ items: [GTask]) async {
+        for task in items { await completeTask(task) }
+    }
+
+    func deleteTasks(_ items: [GTask]) async {
+        for task in items { await deleteTask(task) }
+    }
+
+    func setDueDate(_ items: [GTask], to date: Date?) async {
+        for task in items { await setDueDate(task, to: date) }
+    }
+
+    func moveTasks(_ items: [GTask], toList destinationId: String) async {
+        for task in items { await moveTask(task, toList: destinationId) }
+    }
+
     // MARK: - Selection & Smart Views
 
     /// What the user is currently viewing.
