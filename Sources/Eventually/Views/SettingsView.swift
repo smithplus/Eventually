@@ -142,9 +142,32 @@ struct AccountSettingsTab: View {
                 }
                 .buttonStyle(.borderedProminent)
             }
+
+            Spacer()
+
+            // Version info
+            if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
+               let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
+                VStack(spacing: 4) {
+                    Text("Eventually v\(version) (build \(build))")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text("Built \(buildDateString())")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(.bottom, 8)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding()
+    }
+
+    private func buildDateString() -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: Date())
     }
 }
 
