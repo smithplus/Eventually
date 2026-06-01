@@ -62,7 +62,43 @@
 
 > Features confirmadas por el usuario desde [ideas.md](ideas.md). **Cada pendiente tiene un GitHub issue para tracking.**
 
-> **Prioridad actual: refinar lo existente sobre agregar features nuevas.**
+> **Prioridad actual: refinar Google Tasks a estado óptimo antes de Linear integration.**
+
+---
+
+## 🎯 Path to "Estado Óptimo" (Google Tasks)
+
+Refinamientos críticos antes de empezar Linear integration:
+
+### P0 — Crítico para producción
+- [ ] **Notificaciones** — reminder cuando tarea vence hoy/está overdue
+- [ ] **Error handling UX** — qué pasa sin internet, sync failures, offline mode
+- [ ] **Performance polish** — lazy loading, smooth scrolling con muchas (100+) tareas
+- [ ] **Keyboard navigation refinement** — actualmente tropieza con input fields (Space/Enter conflicts resueltos, pero puede mejorar)
+
+### P1 — Alta prioridad
+- [ ] **Drag & drop reorder** — reordenar tareas dentro de lista (ideas.md: esfuerzo medio)
+- [ ] **URLs clickeables en notas** — detectar links y hacerlos clickeables (ideas.md: esfuerzo bajo)
+- [ ] **Mejorar input de data en descripciones** — mejor UX para editar notas largas con markdown
+
+### P2 — Nice to have
+- [ ] **Widget funcional** — actualmente es placeholder; necesita App Group + cache real
+- [ ] **Vista calendario** — tareas en grilla mensual/semanal
+
+---
+
+## 🚀 Después: Linear Integration (Work Profile)
+
+Una vez Google Tasks esté en "estado óptimo":
+1. Implementar `TaskProvider` protocol
+2. Refactor `GoogleTasksProvider` del servicio actual
+3. Agregar `LinearProvider` (GraphQL + OAuth)
+4. Profile switching UI (Personal = Google, Work = Linear)
+5. Mapeo de conceptos (Linear issues → tareas, estados, prioridades, labels)
+
+**Objetivo final:** Personal (Google Tasks) + Work (Linear) en Eventually con profile switching
+
+---
 
 ### Pendientes (con issue) — ✅ factibles con la API
 - [ ] **Agrupado por fecha** (Vencidas/Hoy/Mañana/Esta semana) — #2 — *distinto de subtareas*
