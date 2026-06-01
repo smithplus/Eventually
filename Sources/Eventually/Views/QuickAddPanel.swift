@@ -46,7 +46,7 @@ struct QuickAddPanel: View {
     @State private var newListText = ""
     @State private var collapsedGroups: Set<String> = []
     @State private var suggestionIndex = 0
-    @State private var completedCollapsed: Bool = UserDefaults.standard.bool(forKey: DefaultsKey.completedSectionCollapsed)
+    @AppStorage(DefaultsKey.completedSectionCollapsed) private var completedCollapsed = false
 
     // Keyboard navigation of the task list + multi-select.
     @FocusState private var listFocused: Bool
@@ -55,8 +55,10 @@ struct QuickAddPanel: View {
     @State private var showBulkDatePicker = false
     @State private var bulkDate = Date()
 
-    // Track when any task row is being edited (to prevent keyboard shortcuts from interfering)
-    @State private var isAnyTaskBeingEdited = false
+    // Track which task row is currently expanded for editing (nil = none).
+    // Using an ID instead of a Bool prevents "stuck true" if two rows try to expand.
+    @State private var expandedTaskID: String? = nil
+    private var isAnyTaskBeingEdited: Bool { expandedTaskID != nil }
 
     /// The flat sequence of task rows currently visible (respects grouping and
     /// collapsed sections) — the order keyboard navigation walks.
@@ -288,16 +290,24 @@ struct QuickAddPanel: View {
             nameFocused = true
             panelFilter = defaultSelection()
         }
-        .onChange(of: panelFilter) { saveLastUsed($0); resetNavigation() }
+        .onChange(of: panelFilter) { newFilter in saveLastUsed(newFilter); resetNavigation() }
         .onChange(of: searchText) { _ in resetNavigation() }
         .onChange(of: showSearch) { _ in resetNavigation() }
-        .onChange(of: nameFocused) { focused in if focused { listFocused = false } }
-        // Keep the cursor valid when the visible set shrinks (e.g. after a
-        // complete/delete) so navigation never points past the end.
+        .onChange(of: nameFocused) { focused in
+            if focused {
+                listFocused = false
+                notesFocused = false
+            }
+        }
+        .onChange(of: anySuggestionsVisible) { visible in
+            if visible { notesFocused = false }
+        }
         .onChange(of: visibleRows.count) { count in
             cursorIndex = max(0, min(cursorIndex, count - 1))
         }
-        .onExitCommand { if !listFocused { handleEscape() } }
+        // Only handle Escape at panel level when NOT in list navigation mode
+        // (list nav handles its own Escape via ListNavKeyHandler to avoid double-fire)
+        .onExitCommand { if !listFocused && !isAnyTaskBeingEdited { handleEscape() } }
         .task { await tasksService.fetchTaskLists() }
         .alert("Rename list", isPresented: Binding(
             get: { renamingList != nil },
@@ -369,10 +379,20 @@ struct QuickAddPanel: View {
 
             Spacer()
 
-            Button("Add task") { submit() }
-                .buttonStyle(CapsuleButton(enabled: canSubmit))
-                .disabled(!canSubmit)
-                .keyboardShortcut(.return, modifiers: .command)
+            addTaskButton
+        }
+    }
+
+    /// Add task button — disables ⌘Return when a task row is expanded (which claims it for "Done")
+    @ViewBuilder
+    private var addTaskButton: some View {
+        let btn = Button("Add task") { submit() }
+            .buttonStyle(CapsuleButton(enabled: canSubmit))
+            .disabled(!canSubmit)
+        if isAnyTaskBeingEdited {
+            btn  // no keyboard shortcut — task row's Done button owns ⌘Return
+        } else {
+            btn.keyboardShortcut(.return, modifiers: .command)
         }
     }
 
@@ -731,14 +751,16 @@ struct QuickAddPanel: View {
                         completedSection
                     }
                 }
-                .animation(.easeInOut(duration: 0.25), value: activeTasks.count)
-                .animation(.easeInOut(duration: 0.25), value: completedTasks.count)
+                // Single animation keyed on total count to prevent competing animations
+                // when a task moves from active→completed simultaneously
+                .animation(.easeInOut(duration: 0.25), value: displayRows.count)
                 .padding(.bottom, Theme.spaceS)
             }
             .frame(maxHeight: .infinity)
             .focusable()
             .focused($listFocused)
             .modifier(ListNavKeyHandler(
+                isEnabled: listFocused,
                 isAnyTaskBeingEdited: isAnyTaskBeingEdited,
                 onUp: { cursorIndex = max(0, cursorIndex - 1) },
                 onDown: { cursorIndex = min(visibleRows.count - 1, cursorIndex + 1) },
@@ -769,7 +791,7 @@ struct QuickAddPanel: View {
                 }
                 TaskRowView(task: ordered.task, isChild: ordered.isChild,
                            showListBadge: showListBadge, showDateBadge: showDateBadge,
-                           isBeingEdited: $isAnyTaskBeingEdited)
+                           expandedTaskID: $expandedTaskID)
             }
             Divider().padding(.leading, ordered.isChild ? 64 : 40)
         }
@@ -1274,6 +1296,7 @@ private struct CommandKeyHandler: ViewModifier {
 /// ↑/↓ move the cursor, Space toggles selection, Return completes, Delete
 /// removes, E expands for edit, ⌘A selects all, Esc/Tab returns to the input.
 private struct ListNavKeyHandler: ViewModifier {
+    let isEnabled: Bool  // Only handle keys when list navigation is active
     let isAnyTaskBeingEdited: Bool
     let onUp: () -> Void
     let onDown: () -> Void
@@ -1287,6 +1310,10 @@ private struct ListNavKeyHandler: ViewModifier {
     func body(content: Content) -> some View {
         if #available(macOS 14.0, *) {
             content.onKeyPress { press in
+                // CRITICAL: Only handle shortcuts when list navigation is explicitly active (Tab pressed)
+                // This prevents interference with normal text input anywhere else in the app
+                guard isEnabled else { return .ignored }
+
                 switch press.key {
                 case .upArrow:   onUp(); return .handled
                 case .downArrow: onDown(); return .handled
@@ -1295,12 +1322,15 @@ private struct ListNavKeyHandler: ViewModifier {
                     if isAnyTaskBeingEdited { return .ignored }
                     onComplete()
                     return .handled
-                case .delete, .deleteForward: onDelete(); return .handled
+                case .delete, .deleteForward:
+                    if isAnyTaskBeingEdited { return .ignored }
+                    onDelete(); return .handled
                 case .escape, .tab: onExit(); return .handled
                 default:
                     if press.modifiers.contains(.command), press.characters == "a" {
                         onSelectAll(); return .handled
-                    } else if press.characters == "e" {
+                    } else if press.key == KeyEquivalent("e"), press.modifiers.isEmpty {
+                        // Use physical key (locale-independent), no modifiers
                         onEdit(); return .handled
                     }
                     return .ignored

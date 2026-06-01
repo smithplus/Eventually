@@ -6,9 +6,11 @@ struct TaskRowView: View {
     var isChild: Bool = false
     var showListBadge: Bool = false
     var showDateBadge: Bool = true
-    @Binding var isBeingEdited: Bool
+    /// Parent tracks which task is expanded by ID — guarantees mutual exclusion
+    @Binding var expandedTaskID: String?
 
-    @State private var isExpanded = false
+    private var isExpanded: Bool { expandedTaskID == task.id }
+
     @State private var editTitle = ""
     @State private var editNotes = ""
     @State private var editingNotes = false
@@ -279,7 +281,8 @@ struct TaskRowView: View {
 
                 Button("Done") { saveDetail() }
                     .buttonStyle(CapsuleButton())
-                    .keyboardShortcut(.return, modifiers: .command)
+                    // ⌘Return only active when this row is expanded (parent disables its own ⌘Return meanwhile)
+                    .keyboardShortcut(isExpanded ? .return : KeyEquivalent("\0"), modifiers: .command)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -368,9 +371,11 @@ struct TaskRowView: View {
         editTitle = task.title
         editNotes = task.notes ?? ""
         editingNotes = false   // show rendered markdown first; tap to edit
-        withAnimation(.easeOut(duration: 0.15)) { isExpanded = true }
-        isEditFocused = true
-        isBeingEdited = true
+        withAnimation(.easeOut(duration: 0.15)) {
+            expandedTaskID = task.id  // sets isExpanded = true via computed prop
+        }
+        // Delay focus until after the expand animation inserts the TextField
+        DispatchQueue.main.async { isEditFocused = true }
     }
 
     private func startEditingNotes() {
@@ -381,8 +386,9 @@ struct TaskRowView: View {
     private func saveDetail() {
         let title = editTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         let notes = editNotes.trimmingCharacters(in: .whitespacesAndNewlines)
-        withAnimation(.easeOut(duration: 0.15)) { isExpanded = false }
-        isBeingEdited = false
+        withAnimation(.easeOut(duration: 0.15)) {
+            expandedTaskID = nil  // sets isExpanded = false via computed prop
+        }
 
         let titleChanged = title != task.title && !title.isEmpty
         let notesChanged = notes != (task.notes ?? "")
