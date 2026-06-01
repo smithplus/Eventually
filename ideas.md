@@ -78,3 +78,4 @@ Leyenda de viabilidad:
 - ✅ Keyboard edit shortcut ('E' key)
 - ✅ Reliability audit completo (9 critical bugs fixed)
 - ✅ Text editing UX fix (Space/Enter respetan campos de texto activos)
+- ✅ Comprehensive UX audit — 12 keyboard/focus/state conflicts resueltos (build 3)

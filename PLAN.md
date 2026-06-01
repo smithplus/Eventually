@@ -74,12 +74,13 @@ Refinamientos críticos antes de empezar Linear integration:
 - [ ] **Notificaciones** — reminder cuando tarea vence hoy/está overdue
 - [ ] **Error handling UX** — qué pasa sin internet, sync failures, offline mode
 - [ ] **Performance polish** — lazy loading, smooth scrolling con muchas (100+) tareas
-- [ ] **Keyboard navigation refinement** — actualmente tropieza con input fields (Space/Enter conflicts resueltos, pero puede mejorar)
+- [x] **Keyboard navigation refinement** — 12 conflictos resueltos en audit build 3 ✅
 
 ### P1 — Alta prioridad
 - [ ] **Drag & drop reorder** — reordenar tareas dentro de lista (ideas.md: esfuerzo medio)
 - [ ] **URLs clickeables en notas** — detectar links y hacerlos clickeables (ideas.md: esfuerzo bajo)
 - [ ] **Mejorar input de data en descripciones** — mejor UX para editar notas largas con markdown
+- [ ] **Auto-updates (Sparkle)** — la app actualmente NO verifica updates disponibles; integrar Sparkle para distribución sin App Store
 
 ### P2 — Nice to have
 - [ ] **Widget funcional** — actualmente es placeholder; necesita App Group + cache real
