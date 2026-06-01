@@ -104,16 +104,46 @@ class GoogleTasksService: ObservableObject {
         guard let token = await authService?.validAccessToken() else { return }
 
         do {
-            let data = try await get("/lists/\(listId)/tasks?showCompleted=false&maxResults=100", token: token)
-            let response = try JSONDecoder().decode(TasksResponse.self, from: data)
-            var items = (response.items ?? []).map { item -> GTask in
+            // Fetch active tasks
+            let activeData = try await get("/lists/\(listId)/tasks?showCompleted=false&maxResults=100", token: token)
+            let activeResponse = try JSONDecoder().decode(TasksResponse.self, from: activeData)
+            var activeItems = (activeResponse.items ?? []).map { item -> GTask in
                 var t = item
                 t.listId = listId
                 return t
             }
-            // Detect recurring patterns
-            items = detectRecurringPatterns(in: items)
-            tasks[listId] = items
+
+            // Fetch recent completed tasks (for pattern detection)
+            let completedData = try await get("/lists/\(listId)/tasks?showCompleted=true&maxResults=200", token: token)
+            let completedResponse = try JSONDecoder().decode(TasksResponse.self, from: completedData)
+            let completedItems = (completedResponse.items ?? [])
+                .filter { $0.isCompleted }
+                .map { item -> GTask in
+                    var t = item
+                    t.listId = listId
+                    return t
+                }
+
+            // Detect patterns using both active and completed history
+            let allForDetection = activeItems + completedItems
+            let patternsDetected = detectRecurringPatterns(in: allForDetection)
+
+            // Apply detected patterns back to active tasks only
+            activeItems = activeItems.map { active in
+                if let match = patternsDetected.first(where: {
+                    $0.title.lowercased().trimmingCharacters(in: .whitespaces) ==
+                    active.title.lowercased().trimmingCharacters(in: .whitespaces) &&
+                    $0.isRecurring
+                }) {
+                    var updated = active
+                    updated.isRecurring = true
+                    updated.recurrencePattern = match.recurrencePattern
+                    return updated
+                }
+                return active
+            }
+
+            tasks[listId] = activeItems
         } catch {
             self.error = error.localizedDescription
         }
@@ -605,10 +635,21 @@ class GoogleTasksService: ObservableObject {
                 continue
             }
 
-            // Sort by due date
+            // Sort by due date OR completed date (for completed tasks)
             let sorted = instances
-                .filter { $0.dueDay != nil }
-                .sorted { ($0.dueDay ?? Date.distantPast) < ($1.dueDay ?? Date.distantPast) }
+                .compactMap { task -> (GTask, Date)? in
+                    if let due = task.dueDay {
+                        return (task, due)
+                    } else if let completed = task.completed {
+                        // Use completion date for completed tasks without due
+                        let comps = Calendar.current.dateComponents([.year, .month, .day], from: completed)
+                        if let day = Calendar.current.date(from: comps) {
+                            return (task, day)
+                        }
+                    }
+                    return nil
+                }
+                .sorted { $0.1 < $1.1 }
 
             guard sorted.count >= 2 else {
                 // Not enough dated instances
@@ -619,10 +660,10 @@ class GoogleTasksService: ObservableObject {
             // Calculate intervals between consecutive dates
             var intervals: [Int] = []
             for i in 0..<(sorted.count - 1) {
-                if let from = sorted[i].dueDay, let to = sorted[i + 1].dueDay {
-                    let days = Calendar.current.dateComponents([.day], from: from, to: to).day ?? 0
-                    intervals.append(days)
-                }
+                let from = sorted[i].1
+                let to = sorted[i + 1].1
+                let days = Calendar.current.dateComponents([.day], from: from, to: to).day ?? 0
+                intervals.append(days)
             }
 
             guard !intervals.isEmpty else {
@@ -635,20 +676,22 @@ class GoogleTasksService: ObservableObject {
             let isRegular = intervals.allSatisfy { abs($0 - avgInterval) <= 1 }
 
             if isRegular, let pattern = patternForInterval(avgInterval) {
-                // Mark all instances as recurring with the detected pattern
-                let marked = sorted.map { task -> GTask in
-                    var t = task
+                // Mark ALL instances as recurring (even completed ones for history)
+                let marked = sorted.map { tuple -> GTask in
+                    var t = tuple.0
                     t.isRecurring = true
                     t.recurrencePattern = pattern
                     return t
                 }
 
-                // Only show the FIRST (closest) instance, hide future duplicates
-                if let first = marked.first {
+                // Only show active (non-completed) instances
+                // (completed tasks are filtered out in fetchTasks)
+                let activeMarked = marked.filter { !$0.isCompleted }
+                if let first = activeMarked.first {
                     result.append(first)
                 }
-                // Add any instances without due dates (edge case)
-                result.append(contentsOf: instances.filter { $0.dueDay == nil })
+                // Also add any instances without dates
+                result.append(contentsOf: instances.filter { $0.dueDay == nil && $0.completed == nil })
             } else {
                 // Not a regular pattern → show all
                 result.append(contentsOf: instances)
