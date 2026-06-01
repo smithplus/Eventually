@@ -5,6 +5,7 @@ struct TaskRowView: View {
     let task: GTask
     var isChild: Bool = false
     var showListBadge: Bool = false
+    var showDateBadge: Bool = true
 
     @State private var isExpanded = false
     @State private var editTitle = ""
@@ -22,18 +23,18 @@ struct TaskRowView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(alignment: .top, spacing: 10) {
+            HStack(alignment: .top, spacing: 12) {
                 if isChild {
                     // Subtask indent guide
                     Rectangle()
-                        .fill(Color.primary.opacity(0.12))
-                        .frame(width: 1.5, height: 16)
+                        .fill(Color.primary.opacity(0.15))
+                        .frame(width: 2, height: 18)
                         .padding(.leading, Theme.spaceM)
-                        .padding(.trailing, 2)
+                        .padding(.trailing, 4)
                 }
                 checkboxButton
                 taskContent
-                if !isExpanded { Spacer() }
+                if !isExpanded { Spacer(minLength: 0) }
                 if isHovering && !isExpanded {
                     hoverActions
                 }
@@ -43,9 +44,12 @@ struct TaskRowView: View {
                 subtaskInputRow
             }
         }
-        .padding(.horizontal, Theme.spaceM)
-        .padding(.vertical, isChild ? Theme.spaceXS + 2 : Theme.spaceS)
-        .background((isHovering || isExpanded) ? Color.primary.opacity(0.04) : .clear)
+        .padding(.horizontal, Theme.spaceM + 2)
+        .padding(.vertical, isChild ? 8 : 10)
+        .background(
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill((isHovering || isExpanded) ? Color.primary.opacity(0.05) : .clear)
+        )
         .onHover { isHovering = $0 }
         .contextMenu { taskMenuItems }
         .popover(isPresented: $showDatePicker) {
@@ -152,11 +156,11 @@ struct TaskRowView: View {
             Task { await tasksService.completeTask(task) }
         } label: {
             Image(systemName: task.isCompleted ? "checkmark.circle.fill" : "circle")
-                .font(.system(size: 16))
+                .font(.system(size: 18, weight: .regular))
                 .foregroundStyle(task.isCompleted ? .green : .secondary)
         }
         .buttonStyle(.plain)
-        .padding(.top, 1)
+        .padding(.top, 2)
     }
 
     @ViewBuilder
@@ -169,9 +173,9 @@ struct TaskRowView: View {
     }
 
     private var collapsedContent: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
             Text(task.title.isEmpty ? "Untitled" : task.title)
-                .font(.system(size: 13))
+                .font(.system(size: 13.5, weight: .medium))
                 .strikethrough(task.isCompleted)
                 .foregroundStyle(task.isCompleted ? .secondary : .primary)
                 .lineLimit(2)
@@ -184,19 +188,20 @@ struct TaskRowView: View {
                         .lineLimit(isExpanded ? 8 : 1)
                 }
                 .font(.system(size: 11))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.tertiary)
             }
 
             // Metadata row: due date + list badge
-            if task.dueDay != nil || (showListBadge && task.listId != nil) {
-                HStack(spacing: 8) {
-                    if let due = task.dueDay {
+            if (showDateBadge && task.dueDay != nil) || (showListBadge && task.listId != nil) {
+                HStack(spacing: 6) {
+                    if showDateBadge, let due = task.dueDay {
                         dueBadge(due)
                     }
                     if showListBadge, let listId = task.listId {
                         listBadge(listId)
                     }
                 }
+                .padding(.top, 2)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -277,14 +282,19 @@ struct TaskRowView: View {
         let isOverdue = date < Calendar.current.startOfDay(for: Date()) && !task.isCompleted
         let isToday = Calendar.current.isDateInToday(date)
         let color: Color = isOverdue ? Theme.danger : isToday ? Theme.dateChip : .secondary
+        let bgColor: Color = isOverdue ? Theme.danger.opacity(0.12) : isToday ? Theme.dateChip.opacity(0.12) : Color.primary.opacity(0.06)
 
-        return HStack(spacing: 3) {
-            Image(systemName: isOverdue ? "exclamationmark.circle" : "calendar")
+        return HStack(spacing: 4) {
+            Image(systemName: isOverdue ? "exclamationmark.circle.fill" : "calendar")
                 .font(.system(size: 9))
             Text(formatDueDate(date))
                 .font(.system(size: 11, weight: isOverdue || isToday ? .medium : .regular))
         }
         .foregroundStyle(color)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(bgColor)
+        .clipShape(Capsule())
     }
 
     private func listBadge(_ listId: String) -> some View {
@@ -296,6 +306,10 @@ struct TaskRowView: View {
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
         }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(color.opacity(0.12))
+        .clipShape(Capsule())
     }
 
     private func openDatePicker() {

@@ -535,6 +535,9 @@ struct QuickAddPanel: View {
         Divider()
         Button(role: .destructive) {
             if panelFilter == .list(list.id) { panelFilter = .today }
+            // Clear selections and collapsed state for this list
+            selectedTaskIDs.removeAll()
+            collapsedGroups.remove(list.id)
             Task { await tasksService.deleteList(list) }
         } label: { Label("Delete list", systemImage: "trash") }
     }
@@ -678,7 +681,8 @@ struct QuickAddPanel: View {
                             groupHeader(title: group.title, color: dateGroupColor(group.key),
                                         count: group.rows.count, key: "date:" + group.key)
                             if !collapsedGroups.contains("date:" + group.key) {
-                                ForEach(group.rows) { taskRow($0, badge: panelFilter.isSmart || showSearch) }
+                                // Grouped by date: show only list badge (date is in the header)
+                                ForEach(group.rows) { taskRow($0, showListBadge: panelFilter.isSmart || showSearch, showDateBadge: false) }
                             }
                         }
                     } else if isGroupedByList {
@@ -687,11 +691,13 @@ struct QuickAddPanel: View {
                                         count: group.rows.count, key: group.listId,
                                         list: tasksService.taskLists.first { $0.id == group.listId })
                             if !collapsedGroups.contains(group.listId) {
-                                ForEach(group.rows) { taskRow($0, badge: false) }
+                                // Grouped by list: show only date badge (list is in the header)
+                                ForEach(group.rows) { taskRow($0, showListBadge: false, showDateBadge: true) }
                             }
                         }
                     } else {
-                        ForEach(displayRows) { taskRow($0, badge: panelFilter.isSmart || showSearch) }
+                        // No grouping: show both badges
+                        ForEach(displayRows) { taskRow($0, showListBadge: panelFilter.isSmart || showSearch, showDateBadge: true) }
                     }
                 }
                 .padding(.bottom, Theme.spaceS)
@@ -711,7 +717,7 @@ struct QuickAddPanel: View {
         }
     }
 
-    private func taskRow(_ ordered: GoogleTasksService.OrderedTask, badge: Bool) -> some View {
+    private func taskRow(_ ordered: GoogleTasksService.OrderedTask, showListBadge: Bool, showDateBadge: Bool = true) -> some View {
         let isCursor = listFocused && cursorTask?.id == ordered.task.id
         let isSelected = selectedTaskIDs.contains(ordered.task.id)
         return VStack(spacing: 0) {
@@ -722,7 +728,8 @@ struct QuickAddPanel: View {
                         .foregroundStyle(Theme.accent)
                         .padding(.leading, Theme.spaceS)
                 }
-                TaskRowView(task: ordered.task, isChild: ordered.isChild, showListBadge: badge)
+                TaskRowView(task: ordered.task, isChild: ordered.isChild,
+                           showListBadge: showListBadge, showDateBadge: showDateBadge)
             }
             Divider().padding(.leading, ordered.isChild ? 64 : 40)
         }
@@ -739,17 +746,27 @@ struct QuickAddPanel: View {
         return Button {
             if collapsed { collapsedGroups.remove(key) } else { collapsedGroups.insert(key) }
         } label: {
-            HStack(spacing: 6) {
+            HStack(spacing: 8) {
                 Image(systemName: collapsed ? "chevron.right" : "chevron.down")
                     .font(.system(size: 9, weight: .bold))
                     .foregroundStyle(.secondary)
                     .frame(width: 10)
-                Circle().fill(color).frame(width: 7, height: 7)
-                Text(title)
-                    .font(.system(size: 13, weight: .semibold))
-                Text("\(count)")
-                    .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
+
+                // Badge capsule with color background
+                HStack(spacing: 6) {
+                    Circle().fill(color).frame(width: 7, height: 7)
+                    Text(title)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.primary)
+                    Text("\(count)")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(color.opacity(0.15))
+                .clipShape(Capsule())
+
                 Spacer()
             }
             .padding(.horizontal, Theme.spaceM)

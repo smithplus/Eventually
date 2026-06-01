@@ -253,6 +253,8 @@ class GoogleTasksService: ObservableObject {
             tasks[listId]?.removeAll { $0.id == task.id }
         } catch {
             self.error = error.localizedDescription
+            // Reconcile: server might have succeeded but response failed
+            await reconcile(listId)
         }
     }
 
@@ -265,6 +267,8 @@ class GoogleTasksService: ObservableObject {
             tasks[listId]?.removeAll { $0.id == task.id }
         } catch {
             self.error = error.localizedDescription
+            // Reconcile: server might have succeeded but response failed
+            await reconcile(listId)
         }
     }
 
@@ -305,6 +309,8 @@ class GoogleTasksService: ObservableObject {
             }
         } catch {
             self.error = error.localizedDescription
+            // Reconcile: server might have succeeded but response failed
+            await reconcile(listId)
         }
     }
 

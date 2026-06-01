@@ -137,10 +137,17 @@ class AuthService: NSObject, ObservableObject {
     }
 
     func signOut() {
+        // Cancel in-flight refresh to prevent re-authentication
+        refreshInFlight?.cancel()
+        refreshInFlight = nil
+
         accessToken = nil
         refreshToken = nil
         tokenExpiry = nil
         userEmail = nil
+        codeVerifier = nil
+        error = nil
+        didReceiveCallback = false
         isAuthenticated = false
         deleteTokensFromKeychain()
     }
@@ -152,17 +159,16 @@ class AuthService: NSObject, ObservableObject {
     private var refreshInFlight: Task<Void, Never>?
 
     func validAccessToken() async -> String? {
-        if let token = accessToken, let expiry = tokenExpiry, expiry > Date() {
+        // Require 5s buffer to avoid mid-request expiry
+        if let token = accessToken, let expiry = tokenExpiry, expiry > Date().addingTimeInterval(5) {
             return token
         }
-        if let existing = refreshInFlight {
-            await existing.value
-        } else {
-            let task = Task { await self.refreshAccessToken() }
-            refreshInFlight = task
-            await task.value
-            refreshInFlight = nil
+        // Atomic check-and-create to prevent race
+        if refreshInFlight == nil {
+            refreshInFlight = Task { await self.refreshAccessToken() }
         }
+        await refreshInFlight!.value
+        refreshInFlight = nil
         return accessToken
     }
 
@@ -229,6 +235,9 @@ class AuthService: NSObject, ObservableObject {
             saveTokensToKeychain()
             isAuthenticated = true
         } catch {
+            // Clear refresh token to prevent infinite retry loop
+            refreshToken = nil
+            deleteTokensFromKeychain()
             isAuthenticated = false
         }
     }
