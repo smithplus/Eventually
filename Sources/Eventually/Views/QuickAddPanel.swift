@@ -746,30 +746,44 @@ struct QuickAddPanel: View {
         if !draft.name.isEmpty && !draft.name.hasSuffix(" ") { draft.name += " " }
     }
 
-    /// When a `#list` or `!date` token is completed (a space follows it), turn it
-    /// into its colored chip and strip it from the text — leaving just the note.
+    /// When the user finishes a `#list`/`!date` token with a trailing space,
+    /// turn that just-finished word into its colored chip and strip it from the
+    /// text. Only the word immediately before the trailing space is considered,
+    /// and `#list` requires an EXACT (space-insensitive) match so a partial like
+    /// `#My ` never grabs a list called "My List".
     private func commitCompletedTokens() {
-        let parts = draft.name.components(separatedBy: " ")
-        guard parts.count >= 2 else { return }
-        for i in 0..<(parts.count - 1) {       // every token before the last is "finished"
-            let raw = parts[i]
-            if raw.hasPrefix("#"), raw.count > 1, let list = matchList(String(raw.dropFirst())) {
-                draft.listId = list.id
-                removeWord(at: i); return
-            }
-            if raw.hasPrefix("!"), raw.count > 1, let date = QuickAddParser.parse(raw).dueDate {
-                draft.dueDate = date
-                removeWord(at: i); return
-            }
+        guard draft.name.hasSuffix(" ") else { return }
+        var parts = draft.name.components(separatedBy: " ")
+        parts.removeLast()                       // the empty piece after the space
+        guard let raw = parts.last, raw.count > 1 else { return }
+
+        if raw.hasPrefix("#"), let list = exactList(String(raw.dropFirst())) {
+            draft.listId = list.id
+            dropLastTokenKeepingSpace()
+        } else if raw.hasPrefix("!"), let date = QuickAddParser.parse(raw).dueDate {
+            draft.dueDate = date
+            dropLastTokenKeepingSpace()
         }
     }
 
-    private func removeWord(at index: Int) {
-        var parts = draft.name.components(separatedBy: " ")
-        guard index < parts.count else { return }
-        parts.remove(at: index)
-        draft.name = parts.joined(separator: " ")
+    /// Exact list match (ignoring spaces/case) — stricter than the autocomplete.
+    private func exactList(_ name: String) -> TaskList? {
+        let needle = name.replacingOccurrences(of: " ", with: "").lowercased()
+        guard !needle.isEmpty else { return nil }
+        return tasksService.taskLists.first {
+            $0.title.replacingOccurrences(of: " ", with: "").lowercased() == needle
+        }
     }
+
+    /// Remove the finished word (the one before the trailing space), keep a space.
+    private func dropLastTokenKeepingSpace() {
+        var parts = draft.name.components(separatedBy: " ")
+        parts.removeLast()                       // empty piece after trailing space
+        if !parts.isEmpty { parts.removeLast() } // the finished token
+        draft.name = parts.joined(separator: " ")
+        if !draft.name.isEmpty && !draft.name.hasSuffix(" ") { draft.name += " " }
+    }
+
 
     // MARK: - !date autocomplete dropdown
 

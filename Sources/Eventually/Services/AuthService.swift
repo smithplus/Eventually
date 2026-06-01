@@ -147,11 +147,22 @@ class AuthService: NSObject, ObservableObject {
 
     // MARK: - Token Management
 
+    /// In-flight refresh, shared by concurrent callers so N expired-token
+    /// requests trigger exactly one refresh (avoids refresh-token reuse races).
+    private var refreshInFlight: Task<Void, Never>?
+
     func validAccessToken() async -> String? {
         if let token = accessToken, let expiry = tokenExpiry, expiry > Date() {
             return token
         }
-        await refreshAccessToken()
+        if let existing = refreshInFlight {
+            await existing.value
+        } else {
+            let task = Task { await self.refreshAccessToken() }
+            refreshInFlight = task
+            await task.value
+            refreshInFlight = nil
+        }
         return accessToken
     }
 

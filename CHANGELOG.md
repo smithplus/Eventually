@@ -9,7 +9,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 > - **Popover** — the menu-bar dropdown opened with ⌘⇧T (compact, transient).
 > - **Command Window** — the floating window opened with ⌘⇧O (full input + tabs + task list). This is becoming the primary surface.
 
-### Changed (latest)
+### Fixed (audit pass — robustness)
+- **Token refresh coalescing**: concurrent API calls now share a single in-flight refresh instead of each firing one (prevents refresh-token reuse / invalidation).
+- **State reconciliation**: if a mutation's response fails to decode after the server already applied it, the affected list re-syncs instead of silently diverging.
+- **Sign-out clears cache**: tasks/lists are dropped and the badge resets on sign-out (no stale data).
+- **Auto-refresh interval** read consistently as an integer.
+- **Tokenization** of `#list` on space now requires an exact match, so a partial like `#My ` never grabs a list named "My List"; unrecognized `!foo` stays literal in the title rather than being dropped. +2 parser tests (20 total).
+
+### Changed
 - **List chip styled like the date chip** — a filled capsule with the list's color dot + soft-tinted background, consistent with the due-date chip.
 - **Description field**: content-based height (1–8 lines) with Shift+Enter for newlines and Enter to add.
 - **Quick-add keyboard**: Tab accepts the highlighted `#`/`!` suggestion; arrow keys navigate it.

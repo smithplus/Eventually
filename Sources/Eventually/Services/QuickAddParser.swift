@@ -41,7 +41,8 @@ struct QuickAddParser {
             }
 
             // Explicit date marker: !expr (word or relative duration). Wins over
-            // any auto-detected date and always consumes the token.
+            // any auto-detected date. If it doesn't resolve to a date we leave
+            // the token in the title rather than silently dropping the user's text.
             if token.hasPrefix("!"), token.count > 1 {
                 let content = String(token.dropFirst())
                 if let date = explicitDate(content, referenceDate: referenceDate, calendar: calendar) {

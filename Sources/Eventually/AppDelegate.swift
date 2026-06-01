@@ -31,6 +31,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.updateBadge() }
             .store(in: &cancellables)
+
+        // Clear cached tasks when the user signs out so nothing stale lingers.
+        authService.$isAuthenticated
+            .removeDuplicates()
+            .receive(on: RunLoop.main)
+            .sink { [weak self] signedIn in
+                if !signedIn { self?.tasksService.clearCache() }
+                self?.updateBadge()
+            }
+            .store(in: &cancellables)
         NotificationCenter.default.addObserver(
             forName: .badgeSettingChanged, object: nil, queue: .main
         ) { [weak self] _ in
@@ -49,7 +59,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     /// Periodically refresh while signed in, per the Settings interval (0 = off).
     private func setupAutoRefresh() {
         refreshTimer?.invalidate()
-        let minutes = UserDefaults.standard.object(forKey: DefaultsKey.autoRefreshMinutes) as? Int ?? 15
+        // Read as integer; default to 15 if unset (object==nil) or 0 → off.
+        let stored = UserDefaults.standard.object(forKey: DefaultsKey.autoRefreshMinutes)
+        let minutes = stored == nil ? 15 : UserDefaults.standard.integer(forKey: DefaultsKey.autoRefreshMinutes)
         guard minutes > 0 else { return }
         refreshTimer = Timer.scheduledTimer(withTimeInterval: Double(minutes) * 60, repeats: true) { [weak self] _ in
             Task { @MainActor in
@@ -63,7 +75,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func updateBadge() {
         guard let button = statusItem?.button else { return }
         let enabled = UserDefaults.standard.object(forKey: DefaultsKey.showBadgeCount) as? Bool ?? true
-        let count = tasksService.rows(for: .today).count
+        let count = authService.isAuthenticated ? tasksService.rows(for: .today).count : 0
         button.title = (enabled && count > 0) ? " \(count)" : ""
     }
 

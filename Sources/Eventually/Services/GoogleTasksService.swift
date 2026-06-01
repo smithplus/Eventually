@@ -117,6 +117,20 @@ class GoogleTasksService: ObservableObject {
         }
     }
 
+    /// Re-sync one list from the server. Used after a mutation whose response
+    /// failed to decode (the server may have applied it) so local state can't
+    /// silently diverge from the server.
+    private func reconcile(_ listId: String) async {
+        await fetchTasks(for: listId)
+    }
+
+    /// Drop all cached data (e.g. on sign-out) so nothing stale lingers.
+    func clearCache() {
+        taskLists = []
+        tasks = [:]
+        error = nil
+    }
+
     /// A task plus its nesting depth, ready for rendering.
     struct OrderedTask: Identifiable {
         let task: GTask
@@ -212,6 +226,7 @@ class GoogleTasksService: ObservableObject {
             tasks[listId, default: []].insert(newTask, at: 0)
         } catch {
             self.error = error.localizedDescription
+            await reconcile(listId)
         }
     }
 
@@ -269,6 +284,7 @@ class GoogleTasksService: ObservableObject {
             }
         } catch {
             self.error = error.localizedDescription
+            await reconcile(listId)
         }
     }
 
@@ -320,6 +336,8 @@ class GoogleTasksService: ObservableObject {
             tasks[destinationId, default: []].append(moved)
         } catch {
             self.error = error.localizedDescription
+            await reconcile(listId)
+            await reconcile(destinationId)
         }
     }
 

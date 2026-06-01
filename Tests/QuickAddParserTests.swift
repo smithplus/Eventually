@@ -145,4 +145,18 @@ final class QuickAddParserTests: XCTestCase {
         XCTAssertNil(r.dueDate)
         XCTAssertEqual(r.title, "Comprar 4 panes")
     }
+
+    func testUnrecognizedBangStaysLiteral() {
+        // !foo doesn't resolve → keep it in the title, don't silently drop it.
+        let r = QuickAddParser.parse("Tarea !foo", referenceDate: refDate(), calendar: calendar)
+        XCTAssertNil(r.dueDate)
+        XCTAssertEqual(r.title, "Tarea !foo")
+    }
+
+    func testOnlyBangOrHashYieldsEmptyMarkers() {
+        let r = QuickAddParser.parse("Solo titulo # !", referenceDate: refDate(), calendar: calendar)
+        XCTAssertNil(r.dueDate)
+        XCTAssertNil(r.listName)
+        XCTAssertEqual(r.title, "Solo titulo # !")
+    }
 }
