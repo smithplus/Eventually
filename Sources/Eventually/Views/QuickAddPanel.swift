@@ -293,10 +293,13 @@ struct QuickAddPanel: View {
                 quickDateChip("Today", date: Calendar.current.startOfDay(for: Date()))
                 quickDateChip("Tomorrow", date: Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: Date())))
                 Button { showDatePicker.toggle() } label: {
-                    Image(systemName: "calendar")
-                        .font(.system(size: 12))
-                        .padding(.horizontal, Theme.spaceS + 2)
-                        .padding(.vertical, 5)
+                    HStack(spacing: 4) {
+                        Image(systemName: "calendar").font(.system(size: 11))
+                        Text("Pick date").font(.system(size: 12, weight: .medium))
+                    }
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, Theme.spaceM)
+                    .padding(.vertical, 5)
                 }
                 .buttonStyle(.plain)
                 .background(Capsule().strokeBorder(Color.primary.opacity(0.15), lineWidth: 1))

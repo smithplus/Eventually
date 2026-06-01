@@ -28,7 +28,7 @@ struct TaskRowView: View {
                     Rectangle()
                         .fill(Color.primary.opacity(0.12))
                         .frame(width: 1.5, height: 16)
-                        .padding(.leading, 14)
+                        .padding(.leading, Theme.spaceM)
                         .padding(.trailing, 2)
                 }
                 checkboxButton
@@ -43,8 +43,8 @@ struct TaskRowView: View {
                 subtaskInputRow
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, isChild ? 6 : 8)
+        .padding(.horizontal, Theme.spaceM)
+        .padding(.vertical, isChild ? Theme.spaceXS + 2 : Theme.spaceS)
         .background((isHovering || isExpanded) ? Color.primary.opacity(0.04) : .clear)
         .onHover { isHovering = $0 }
         .contextMenu { taskMenuItems }
