@@ -52,9 +52,11 @@ struct TaskRowView: View {
         }
         .padding(.horizontal, Theme.spaceM + 2)
         .padding(.vertical, isChild ? 8 : 10)
+        // #7 — defined surface on hover instead of opacity hack
         .background(
             RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .fill((isHovering || isExpanded) ? Color.primary.opacity(0.05) : .clear)
+                .fill(isExpanded ? Color.primary.opacity(0.06) :
+                      isHovering ? Color.primary.opacity(0.04) : .clear)
         )
         // Tap anywhere on the row (except checkbox/buttons) to expand.
         // .contentShape ensures the full padded area is hittable.
@@ -193,14 +195,15 @@ struct TaskRowView: View {
 
     private var collapsedContent: some View {
         VStack(alignment: .leading, spacing: 5) {
+            // #3 — tight letter-spacing like Linear body text
             Text(task.title.isEmpty ? "Untitled" : task.title)
                 .font(.system(size: 13.5, weight: .medium))
+                .tracking(-0.2)
                 .strikethrough(task.isCompleted)
                 .foregroundStyle(task.isCompleted ? .secondary : .primary)
                 .lineLimit(2)
 
             // Notes preview — plain Text so it doesn't intercept row tap gestures.
-            // Full clickable links are available in the expanded view.
             if let notes = task.notes, !notes.isEmpty {
                 HStack(alignment: .top, spacing: 4) {
                     Image(systemName: "text.alignleft")
@@ -209,13 +212,14 @@ struct TaskRowView: View {
                         .padding(.top, 1)
                     Text(notes)
                         .font(.system(size: 11))
+                        .tracking(-0.1)
                         .foregroundStyle(.tertiary)
                         .lineLimit(1)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
 
-            // Metadata row: due date + list badge + recurrence
+            // #4 — metadata hierarchy: date (colored badge) > list (dot+text) > recurrence (icon only)
             if (showDateBadge && task.dueDay != nil) || (showListBadge && task.listId != nil) || task.isRecurring {
                 HStack(spacing: 6) {
                     if showDateBadge, let due = task.dueDay {
@@ -232,7 +236,6 @@ struct TaskRowView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        // No tap gesture here — handled by the parent VStack (.contentShape + .onTapGesture)
     }
 
     private var expandedContent: some View {
@@ -297,6 +300,7 @@ struct TaskRowView: View {
         formatDueDate(date)
     }
 
+    // #1 — date badge: 4px radius (not capsule), colored by urgency — highest priority metadata
     private func dueBadge(_ date: Date) -> some View {
         let isOverdue = date < Calendar.current.startOfDay(for: Date()) && !task.isCompleted
         let isToday = Calendar.current.isDateInToday(date)
@@ -308,43 +312,40 @@ struct TaskRowView: View {
                 .font(.system(size: 9))
             Text(formatDueDate(date))
                 .font(.system(size: 11, weight: isOverdue || isToday ? .medium : .regular))
+                .tracking(-0.1)
         }
         .foregroundStyle(color)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.horizontal, 7)
+        .padding(.vertical, 3)
         .background(bgColor)
-        .clipShape(Capsule())
+        .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
     }
 
+    // #4 — list badge: dot + text only, no background — secondary metadata, doesn't need a pill
     private func listBadge(_ listId: String) -> some View {
         let color = tasksService.listColor(for: listId)
         return HStack(spacing: 4) {
-            Circle().fill(color).frame(width: 6, height: 6)
+            Circle().fill(color).frame(width: 5, height: 5)
             Text(tasksService.listTitle(for: listId) ?? "")
                 .font(.system(size: 11))
-                .foregroundStyle(.secondary)
+                .tracking(-0.1)
+                .foregroundStyle(.tertiary)
                 .lineLimit(1)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(color.opacity(0.12))
-        .clipShape(Capsule())
     }
 
+    // #4 — recurrence badge: icon + text, no background — tertiary metadata, quietest level
     private var recurrenceBadge: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 3) {
             Image(systemName: "arrow.clockwise")
                 .font(.system(size: 9))
             if let pattern = task.recurrencePattern {
                 Text(pattern.rawValue)
                     .font(.system(size: 11))
+                    .tracking(-0.1)
             }
         }
-        .foregroundStyle(.secondary)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(Color.secondary.opacity(0.1))
-        .clipShape(Capsule())
+        .foregroundStyle(.quaternary)
     }
 
     private func openDatePicker() {

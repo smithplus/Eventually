@@ -270,12 +270,13 @@ struct QuickAddPanel: View {
             }
             .padding(Theme.spaceL)
 
-            Divider()
+            // #6 — subtle structural separators (0.5px, very low opacity)
+            Color.primary.opacity(0.07).frame(height: 0.5)
             filterToolbar
-            Divider()
+            Color.primary.opacity(0.07).frame(height: 0.5)
             taskListSection
             if !selectedTasks.isEmpty {
-                Divider()
+                Color.primary.opacity(0.07).frame(height: 0.5)
                 bulkActionBar
             }
         }
@@ -824,7 +825,10 @@ struct QuickAddPanel: View {
                            showListBadge: showListBadge, showDateBadge: showDateBadge,
                            expandedTaskID: $expandedTaskID)
             }
-            Divider().padding(.leading, ordered.isChild ? 64 : 40)
+            // #5 — near-invisible divider (0.5px, very low opacity) — structural, not decorative
+            Color.primary.opacity(0.05)
+                .frame(height: 0.5)
+                .padding(.leading, ordered.isChild ? 64 : 40)
         }
         .background(isSelected ? Theme.accent.opacity(0.08) : Color.clear)
         .animation(.easeInOut(duration: 0.2), value: isSelected)
@@ -835,38 +839,37 @@ struct QuickAddPanel: View {
         .help("Click to edit · ⌘-click to select")
     }
 
-    /// Collapsible section header (used by both list and date grouping).
+    // #2 — section header: Linear-style minimal label — no colored capsule, just text + count + thin line
     private func groupHeader(title: String, color: Color, count: Int, key: String, list: TaskList? = nil) -> some View {
         let collapsed = collapsedGroups.contains(key)
         return Button {
             if collapsed { collapsedGroups.remove(key) } else { collapsedGroups.insert(key) }
         } label: {
-            HStack(spacing: 8) {
-                Image(systemName: collapsed ? "chevron.right" : "chevron.down")
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundStyle(.secondary)
-                    .frame(width: 10)
+            HStack(spacing: 0) {
+                // Thin colored accent line — the only color, keeps list identity without noise
+                color
+                    .frame(width: 2, height: 12)
+                    .clipShape(Capsule())
+                    .padding(.trailing, 8)
 
-                // Badge capsule with color background
-                HStack(spacing: 6) {
-                    Circle().fill(color).frame(width: 7, height: 7)
-                    Text(title)
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(.primary)
-                    Text("\(count)")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(color.opacity(0.15))
-                .clipShape(Capsule())
+                Text(title.uppercased())
+                    .font(.system(size: 10, weight: .semibold))
+                    .tracking(0.4)
+                    .foregroundStyle(.secondary)
+
+                Text("  \(count)")
+                    .font(.system(size: 10, weight: .regular))
+                    .foregroundStyle(.tertiary)
 
                 Spacer()
+
+                Image(systemName: collapsed ? "chevron.right" : "chevron.down")
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundStyle(.tertiary)
             }
             .padding(.horizontal, Theme.spaceM)
-            .padding(.top, Theme.spaceM)
-            .padding(.bottom, Theme.spaceXS)
+            .padding(.top, 14)
+            .padding(.bottom, 5)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -883,33 +886,30 @@ struct QuickAddPanel: View {
                 completedCollapsed.toggle()
                 UserDefaults.standard.set(completedCollapsed, forKey: DefaultsKey.completedSectionCollapsed)
             } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: completedCollapsed ? "chevron.right" : "chevron.down")
-                        .font(.system(size: 9, weight: .bold))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 10)
+                HStack(spacing: 0) {
+                        Color.green
+                            .frame(width: 2, height: 12)
+                            .clipShape(Capsule())
+                            .padding(.trailing, 8)
 
-                    HStack(spacing: 6) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 10))
-                            .foregroundStyle(.green)
-                        Text("Completed")
-                            .font(.system(size: 13, weight: .semibold))
+                        Text("COMPLETED")
+                            .font(.system(size: 10, weight: .semibold))
+                            .tracking(0.4)
                             .foregroundStyle(.secondary)
-                        Text("\(completedTasks.count)")
-                            .font(.system(size: 12))
+
+                        Text("  \(completedTasks.count)")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.tertiary)
+
+                        Spacer()
+
+                        Image(systemName: completedCollapsed ? "chevron.right" : "chevron.down")
+                            .font(.system(size: 9, weight: .medium))
                             .foregroundStyle(.tertiary)
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(Color.green.opacity(0.08))
-                    .clipShape(Capsule())
-
-                    Spacer()
-                }
-                .padding(.horizontal, Theme.spaceM)
-                .padding(.top, Theme.spaceM)
-                .padding(.bottom, Theme.spaceXS)
+                    .padding(.horizontal, Theme.spaceM)
+                    .padding(.top, 14)
+                    .padding(.bottom, 5)
             }
             .buttonStyle(.plain)
 
