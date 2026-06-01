@@ -546,7 +546,9 @@ class GoogleTasksService: ObservableObject {
     }
 
     /// Performs the request and throws a readable error on non-2xx responses,
-    /// extracting Google's API error message when present.
+    /// extracting Google's API error message when present. A request that
+    /// reaches a 2xx clears any stale error banner; failures re-set it via the
+    /// caller's catch.
     private func send(_ request: URLRequest) async throws -> Data {
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse else { return data }
@@ -554,6 +556,7 @@ class GoogleTasksService: ObservableObject {
         if !(200...299).contains(http.statusCode) {
             throw APIError.from(statusCode: http.statusCode, data: data)
         }
+        error = nil
         return data
     }
 }

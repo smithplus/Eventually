@@ -565,20 +565,65 @@ struct QuickAddPanel: View {
         .padding(.top, Theme.spaceXS)
     }
 
+    // MARK: - Empty state (context-aware)
+
+    private struct EmptyInfo { let icon: String; let title: String; let subtitle: String? }
+
+    private var emptyInfo: EmptyInfo {
+        if tasksService.isLoading && tasksService.taskLists.isEmpty {
+            return .init(icon: "arrow.clockwise", title: "Loading…", subtitle: nil)
+        }
+        if tasksService.taskLists.isEmpty {
+            return .init(icon: "tray", title: "No lists yet",
+                         subtitle: "Create one with the + next to the tabs.")
+        }
+        if showSearch && !searchText.trimmingCharacters(in: .whitespaces).isEmpty {
+            return .init(icon: "magnifyingglass", title: "No matches",
+                         subtitle: "No tasks match “\(searchText)”.")
+        }
+        switch panelFilter {
+        case .today:
+            return .init(icon: "checkmark.circle", title: "All clear for today",
+                         subtitle: "Nothing due today or overdue.")
+        case .upcoming:
+            return .init(icon: "calendar", title: "Nothing upcoming",
+                         subtitle: "No tasks with a due date.")
+        case .all:
+            return .init(icon: "checkmark.circle", title: "All done",
+                         subtitle: "Add a task above to get started.")
+        case .list(let id):
+            let name = tasksService.listTitle(for: id) ?? "this list"
+            return .init(icon: "checkmark.circle", title: "“\(name)” is empty",
+                         subtitle: "Add a task above to get started.")
+        }
+    }
+
+    private var emptyState: some View {
+        let info = emptyInfo
+        return VStack(spacing: Theme.spaceS) {
+            Image(systemName: info.icon)
+                .font(.system(size: 28, weight: .light))
+                .foregroundStyle(.secondary)
+            Text(info.title)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(.secondary)
+            if let subtitle = info.subtitle {
+                Text(subtitle)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.tertiary)
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(Theme.spaceL)
+    }
+
     // MARK: - Task list
 
     @ViewBuilder
     private var taskListSection: some View {
         if displayRows.isEmpty {
-            VStack(spacing: Theme.spaceS) {
-                Image(systemName: "checkmark.circle")
-                    .font(.system(size: 26))
-                    .foregroundStyle(.secondary)
-                Text("No tasks")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            emptyState
         } else {
             ScrollView {
                 LazyVStack(spacing: 0) {

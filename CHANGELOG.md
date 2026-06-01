@@ -9,6 +9,10 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 > - **Popover** — the menu-bar dropdown opened with ⌘⇧T (compact, transient).
 > - **Command Window** — the floating window opened with ⌘⇧O (full input + tabs + task list). This is becoming the primary surface.
 
+### Changed (refinement)
+- **Context-aware empty states**: distinct icon/message for loading, no lists yet, no search matches, and each empty view (Today "All clear", Upcoming, All, a named list).
+- **Stale error banner clears on success**: any successful request clears the error; failures re-set it.
+
 ### Fixed (audit pass — robustness)
 - **Token refresh coalescing**: concurrent API calls now share a single in-flight refresh instead of each firing one (prevents refresh-token reuse / invalidation).
 - **State reconciliation**: if a mutation's response fails to decode after the server already applied it, the affected list re-syncs instead of silently diverging.
