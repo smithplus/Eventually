@@ -41,6 +41,8 @@ struct QuickAddPanel: View {
     @FocusState private var searchFocused: Bool
 
     @State private var renamingList: TaskList?
+    @State private var deletingList: TaskList?
+    @State private var confirmSignOut = false
     @State private var renameText = ""
     @State private var showNewList = false
     @State private var newListText = ""
@@ -337,6 +339,29 @@ struct QuickAddPanel: View {
             }
             Button("Cancel", role: .cancel) {}
         }
+        // Sign out confirmation
+        .alert("Sign out?", isPresented: $confirmSignOut) {
+            Button("Sign Out", role: .destructive) { authService.signOut() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("You'll need to sign in again to access your tasks.")
+        }
+        // Delete list confirmation
+        .alert("Delete \"\(deletingList?.title ?? "")\"?",
+               isPresented: Binding(get: { deletingList != nil }, set: { if !$0 { deletingList = nil } })) {
+            Button("Delete", role: .destructive) {
+                if let list = deletingList {
+                    if panelFilter == .list(list.id) { panelFilter = .today }
+                    selectedTaskIDs.removeAll()
+                    collapsedGroups.remove(list.id)
+                    Task { await tasksService.deleteList(list) }
+                }
+                deletingList = nil
+            }
+            Button("Cancel", role: .cancel) { deletingList = nil }
+        } message: {
+            Text("All tasks in this list will be permanently deleted.")
+        }
     }
 
     // MARK: - Description (optional, markdown-friendly)
@@ -579,11 +604,7 @@ struct QuickAddPanel: View {
         } label: { Label("Clear completed", systemImage: "checkmark.circle") }
         Divider()
         Button(role: .destructive) {
-            if panelFilter == .list(list.id) { panelFilter = .today }
-            // Clear selections and collapsed state for this list
-            selectedTaskIDs.removeAll()
-            collapsedGroups.remove(list.id)
-            Task { await tasksService.deleteList(list) }
+            deletingList = list
         } label: { Label("Delete list", systemImage: "trash") }
     }
 
@@ -621,9 +642,13 @@ struct QuickAddPanel: View {
                 }
             } label: {
                 Image(systemName: "arrow.up.arrow.down").font(.system(size: 12))
+                    // Tinted when any non-default sort/grouping is active
+                    .foregroundStyle(
+                        (groupByDate || groupByList || tasksService.sortOrder != .myOrder)
+                        ? Theme.accent : .secondary
+                    )
             }
             .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
-            .foregroundStyle(.secondary)
 
             if tasksService.isLoading {
                 ProgressView().controlSize(.mini)
@@ -635,7 +660,7 @@ struct QuickAddPanel: View {
                 if let email = authService.userEmail {
                     Section(email) {
                         Button("Settings...") { NotificationCenter.default.post(name: .openSettings, object: nil) }
-                        Button("Sign Out") { authService.signOut() }
+                        Button("Sign Out", role: .destructive) { confirmSignOut = true }
                     }
                 } else {
                     Button("Settings...") { NotificationCenter.default.post(name: .openSettings, object: nil) }
@@ -807,6 +832,7 @@ struct QuickAddPanel: View {
         .simultaneousGesture(TapGesture().modifiers(.command).onEnded {
             toggleSelection(ordered.task.id)
         })
+        .help("Click to edit · ⌘-click to select")
     }
 
     /// Collapsible section header (used by both list and date grouping).
@@ -908,7 +934,7 @@ struct QuickAddPanel: View {
     // MARK: - Name
 
     private var nameField: some View {
-        TextField("", text: $draft.name, prompt: Text("Task name  ·  # list  ·  !4dias"))
+        TextField("", text: $draft.name, prompt: Text("Task name  ·  #list  ·  !tomorrow"))
             .textFieldStyle(.plain)
             .font(.system(size: 22, weight: .medium))
             .focused($nameFocused)

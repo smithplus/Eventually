@@ -17,7 +17,7 @@ struct SettingsView: View {
             AccountSettingsTab()
                 .tabItem { Label("Account", systemImage: "person.circle") }
         }
-        .frame(width: 420, height: 300)
+        .frame(width: 420, height: 380)
         .padding()
     }
 }
@@ -119,6 +119,7 @@ struct ShortcutsSettingsTab: View {
 
 struct AccountSettingsTab: View {
     @EnvironmentObject var authService: AuthService
+    @State private var confirmSignOut = false
 
     var body: some View {
         VStack(spacing: 16) {
@@ -131,10 +132,16 @@ struct AccountSettingsTab: View {
                     .font(.headline)
 
                 Button("Sign Out", role: .destructive) {
-                    authService.signOut()
+                    confirmSignOut = true
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.red)
+                .alert("Sign out?", isPresented: $confirmSignOut) {
+                    Button("Sign Out", role: .destructive) { authService.signOut() }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("You'll need to sign in again to access your tasks.")
+                }
             } else {
                 Text("Not signed in")
                     .foregroundStyle(.secondary)

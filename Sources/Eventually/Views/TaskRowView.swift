@@ -63,17 +63,18 @@ struct TaskRowView: View {
         .onHover { isHovering = $0 }
         .contextMenu { taskMenuItems }
         .popover(isPresented: $showDatePicker) {
-            VStack(spacing: 8) {
-                DatePicker("Due date", selection: $pickerDate, displayedComponents: .date)
-                    .datePickerStyle(.graphical)
-                    .labelsHidden()
-                Button("Save") {
-                    Task { await tasksService.setDueDate(task, to: pickerDate) }
+            // Auto-commits on day selection (consistent with quick-add date picker)
+            DatePicker("", selection: Binding(
+                get: { pickerDate },
+                set: { newDate in
+                    pickerDate = newDate
+                    Task { await tasksService.setDueDate(task, to: newDate) }
                     showDatePicker = false
                 }
-                .buttonStyle(CapsuleButton())
-            }
-            .padding()
+            ), displayedComponents: .date)
+            .datePickerStyle(.graphical)
+            .labelsHidden()
+            .padding(8)
         }
     }
 
@@ -370,11 +371,18 @@ struct TaskRowView: View {
         subtaskTitle = ""
     }
 
-    /// Done button — only registers ⌘Return when this row is expanded.
-    /// Uses a conditional @ViewBuilder instead of KeyEquivalent("\0") (undefined behavior).
+    /// Done button — shows ⌘↵ hint and only registers the shortcut when expanded.
     @ViewBuilder
     private var doneButton: some View {
-        let btn = Button("Done") { saveDetail() }.buttonStyle(CapsuleButton())
+        let btn = Button(action: saveDetail) {
+            HStack(spacing: 5) {
+                Text("Done")
+                Text("⌘↵")
+                    .font(.system(size: 10))
+                    .opacity(0.7)
+            }
+        }
+        .buttonStyle(CapsuleButton())
         if isExpanded {
             btn.keyboardShortcut(.return, modifiers: .command)
         } else {
