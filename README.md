@@ -14,7 +14,11 @@
 - **Keyboard-first**: navegación completa por teclado, multi-select, bulk actions
 - **Markdown rendering** en notas (headings, bullets, inline styles)
 - **Group by date / list** con headers colapsables
+- **Recurring task detection** — detecta patrones y muestra badge ↻ Weekly/Monthly
+- **Completed tasks section** — sección colapsable con animaciones smooth
+- **Uncomplete tasks** — click checkbox en completadas para deshacer
 - **Auto-refresh** configurable (5/15/30 min)
+- **Draft persistence** — borrador sobrevive al cerrar la app
 - Widget de escritorio small y medium (WidgetKit)
 - Login con Google OAuth 2.0 — tokens guardados localmente
 

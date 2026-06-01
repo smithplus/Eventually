@@ -65,7 +65,15 @@ Leyenda de viabilidad:
 1. ~~**Agrupado por fecha**~~ ✅ Hecho
 2. ~~**Badge con contador**~~ ✅ Hecho + **notificaciones de vencimiento** pendiente
 3. ~~**Navegación por teclado**~~ ✅ Hecho + **acciones ⌘K** pendiente
-4. **Clipboard → task** + **snippets** — captura ultrarrápida
-5. **Wire del widget real** — ya está el 80%, falta el App Group
+4. ~~**Vista de completadas**~~ ✅ Hecho (sección colapsable + uncomplete)
+5. ~~**Recurrencia**~~ ✅ Hecho (detección automática por patrón + badge ↻)
 
-Lo decidís vos. Nada de esto está empezado.
+## Completado recientemente (Junio 2026)
+- ✅ Recurring task detection (Weekly/Monthly/Daily badges)
+- ✅ Completed tasks section (colapsable, animaciones)
+- ✅ Uncomplete tasks (click checkbox para deshacer)
+- ✅ Draft persistence (borrador sobrevive al cerrar)
+- ✅ Concurrent mutation guards (no duplicate requests)
+- ✅ Clear completed bulk action
+- ✅ Keyboard edit shortcut ('E' key)
+- ✅ Reliability audit completo (9 critical bugs fixed)
