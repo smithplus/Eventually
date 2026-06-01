@@ -48,9 +48,8 @@ struct QuickAddPanel: View {
     @State private var suggestionIndex = 0
     @AppStorage(DefaultsKey.completedSectionCollapsed) private var completedCollapsed = false
 
-    // Keyboard navigation of the task list + multi-select.
+    // Multi-select (⌘+Click). No cursor navigation — avoids conflicts with text input.
     @FocusState private var listFocused: Bool
-    @State private var cursorIndex = 0
     @State private var selectedTaskIDs: Set<String> = []
     @State private var showBulkDatePicker = false
     @State private var bulkDate = Date()
@@ -82,10 +81,6 @@ struct QuickAddPanel: View {
     /// Tasks currently selected AND visible (selection is pruned on view change).
     private var selectedTasks: [GTask] {
         visibleRows.map(\.task).filter { selectedTaskIDs.contains($0.id) }
-    }
-
-    private var cursorTask: GTask? {
-        visibleRows.indices.contains(cursorIndex) ? visibleRows[cursorIndex].task : nil
     }
 
     /// Which tasks are shown below the input.
@@ -302,11 +297,19 @@ struct QuickAddPanel: View {
                 notesFocused = false
             }
         }
+        // When a task expands for editing, clear any list focus and selection.
+        .onChange(of: expandedTaskID) { id in
+            if id != nil {
+                listFocused = false
+                selectedTaskIDs.removeAll()
+            }
+        }
         .onChange(of: anySuggestionsVisible) { visible in
             if visible { notesFocused = false }
         }
-        .onChange(of: visibleRows.count) { count in
-            cursorIndex = max(0, min(cursorIndex, count - 1))
+        .onChange(of: visibleRows.count) { _ in
+            // Prune stale selections when tasks disappear
+            selectedTaskIDs.formIntersection(Set(visibleRows.map(\.task.id)))
         }
         // Only handle Escape at panel level when NOT in list navigation mode
         // (list nav handles its own Escape via ListNavKeyHandler to avoid double-fire)
@@ -776,28 +779,12 @@ struct QuickAddPanel: View {
                 .padding(.bottom, Theme.spaceS)
             }
             .frame(maxHeight: .infinity)
-            .focusable()
-            .focused($listFocused)
-            .modifier(ListNavKeyHandler(
-                isEnabled: listFocused,
-                isAnyTaskBeingEdited: isAnyTaskBeingEdited,
-                onUp: { cursorIndex = max(0, cursorIndex - 1) },
-                onDown: { cursorIndex = min(visibleRows.count - 1, cursorIndex + 1) },
-                onToggleSelect: { if let t = cursorTask { toggleSelection(t.id) } },
-                onComplete: { runOnTargets { await tasksService.completeTasks($0) } },
-                onDelete: { runOnTargets { await tasksService.deleteTasks($0) } },
-                onSelectAll: { selectedTaskIDs = Set(visibleRows.map(\.task.id)) },
-                onEdit: {
-                    // TODO: Expand cursor task for editing
-                    // For now, just select it (expansion handled by tap)
-                },
-                onExit: { exitListNavigation() }
-            ))
+            // Delete key for bulk actions on selected tasks
+            .onDeleteCommand { runOnTargets { await tasksService.deleteTasks($0) } }
         }
     }
 
     private func taskRow(_ ordered: GoogleTasksService.OrderedTask, showListBadge: Bool, showDateBadge: Bool = true) -> some View {
-        let isCursor = listFocused && cursorTask?.id == ordered.task.id
         let isSelected = selectedTaskIDs.contains(ordered.task.id)
         return VStack(spacing: 0) {
             HStack(spacing: 0) {
@@ -814,9 +801,7 @@ struct QuickAddPanel: View {
             }
             Divider().padding(.leading, ordered.isChild ? 64 : 40)
         }
-        .background(isCursor ? Theme.accent.opacity(0.18)
-                    : isSelected ? Theme.accent.opacity(0.08) : Color.clear)
-        .animation(.easeInOut(duration: 0.2), value: isCursor)
+        .background(isSelected ? Theme.accent.opacity(0.08) : Color.clear)
         .animation(.easeInOut(duration: 0.2), value: isSelected)
         .transition(.opacity.combined(with: .move(edge: .top)))
         .simultaneousGesture(TapGesture().modifiers(.command).onEnded {
@@ -932,8 +917,7 @@ struct QuickAddPanel: View {
                 onShiftReturn: { notesFocused = true },
                 onUp: { moveSuggestion(-1) },
                 onDown: { moveSuggestion(1) },
-                onAcceptSuggestion: { _ = acceptSuggestion() },
-                onTabToList: { enterListNavigation() }
+                onAcceptSuggestion: { _ = acceptSuggestion() }
             ))
             .onChange(of: draft.name) { _ in
                 suggestionIndex = 0
@@ -964,15 +948,6 @@ struct QuickAddPanel: View {
         suggestionIndex = max(0, min(count - 1, suggestionIndex + delta))
     }
 
-    // MARK: - List keyboard navigation (Tab from the input)
-
-    private func enterListNavigation() {
-        guard !visibleRows.isEmpty else { return }
-        cursorIndex = min(max(cursorIndex, 0), visibleRows.count - 1)
-        nameFocused = false
-        listFocused = true
-    }
-
     private func exitListNavigation() {
         clearSelection()
         listFocused = false
@@ -998,9 +973,8 @@ struct QuickAddPanel: View {
         return true
     }
 
-    /// Reset cursor and prune selection to visible rows when the view changes.
+    /// Prune stale selections when visible rows change.
     private func resetNavigation() {
-        cursorIndex = 0
         selectedTaskIDs.formIntersection(Set(visibleRows.map(\.task.id)))
     }
 
@@ -1067,9 +1041,9 @@ struct QuickAddPanel: View {
         .padding(.vertical, Theme.spaceS)
     }
 
-    /// Run a batch action on the current selection, or the cursor row if none.
+    /// Run a batch action on the current selection.
     private func runOnTargets(_ op: @escaping ([GTask]) async -> Void) {
-        let targets = selectedTaskIDs.isEmpty ? [cursorTask].compactMap { $0 } : selectedTasks
+        let targets = selectedTasks
         guard !targets.isEmpty else { return }
         clearSelection()
         Task { await op(targets) }
@@ -1303,7 +1277,6 @@ private struct CommandKeyHandler: ViewModifier {
     let onUp: () -> Void
     let onDown: () -> Void
     let onAcceptSuggestion: () -> Void
-    let onTabToList: () -> Void
 
     func body(content: Content) -> some View {
         if #available(macOS 14.0, *) {
@@ -1317,62 +1290,11 @@ private struct CommandKeyHandler: ViewModifier {
                 if suggestionsVisible, press.key == .downArrow {
                     onDown(); return .handled
                 }
-                if press.key == .tab {
-                    // Tab accepts an open suggestion, else moves focus to the list.
-                    if suggestionsVisible { onAcceptSuggestion() } else { onTabToList() }
+                if press.key == .tab, suggestionsVisible {
+                    onAcceptSuggestion()
                     return .handled
                 }
                 return .ignored
-            }
-        } else {
-            content
-        }
-    }
-}
-
-/// Keyboard handling for the task list when it has focus (Tab from the input):
-/// ↑/↓ move the cursor, Space toggles selection, Return completes, Delete
-/// removes, E expands for edit, ⌘A selects all, Esc/Tab returns to the input.
-private struct ListNavKeyHandler: ViewModifier {
-    let isEnabled: Bool  // Only handle keys when list navigation is active
-    let isAnyTaskBeingEdited: Bool
-    let onUp: () -> Void
-    let onDown: () -> Void
-    let onToggleSelect: () -> Void
-    let onComplete: () -> Void
-    let onDelete: () -> Void
-    let onSelectAll: () -> Void
-    let onEdit: () -> Void
-    let onExit: () -> Void
-
-    func body(content: Content) -> some View {
-        if #available(macOS 14.0, *) {
-            content.onKeyPress { press in
-                // CRITICAL: Only handle shortcuts when list navigation is explicitly active (Tab pressed)
-                // This prevents interference with normal text input anywhere else in the app
-                guard isEnabled else { return .ignored }
-
-                switch press.key {
-                case .upArrow:   onUp(); return .handled
-                case .downArrow: onDown(); return .handled
-                case .return:
-                    // Don't complete task if any task is being edited
-                    if isAnyTaskBeingEdited { return .ignored }
-                    onComplete()
-                    return .handled
-                case .delete, .deleteForward:
-                    if isAnyTaskBeingEdited { return .ignored }
-                    onDelete(); return .handled
-                case .escape, .tab: onExit(); return .handled
-                default:
-                    if press.modifiers.contains(.command), press.characters == "a" {
-                        onSelectAll(); return .handled
-                    } else if press.key == KeyEquivalent("e"), press.modifiers.isEmpty {
-                        // Use physical key (locale-independent), no modifiers
-                        onEdit(); return .handled
-                    }
-                    return .ignored
-                }
             }
         } else {
             content

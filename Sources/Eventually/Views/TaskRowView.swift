@@ -37,9 +37,12 @@ struct TaskRowView: View {
                 }
                 checkboxButton
                 taskContent
-                if !isExpanded { Spacer(minLength: 0) }
+                Spacer(minLength: 0)
+                // Hover actions OR expand chevron
                 if isHovering && !isExpanded {
                     hoverActions
+                } else if isHovering && isExpanded {
+                    // nothing — expanded state has Done button inline
                 }
             }
 
@@ -53,6 +56,10 @@ struct TaskRowView: View {
             RoundedRectangle(cornerRadius: 6, style: .continuous)
                 .fill((isHovering || isExpanded) ? Color.primary.opacity(0.05) : .clear)
         )
+        // Tap anywhere on the row (except checkbox/buttons) to expand.
+        // .contentShape ensures the full padded area is hittable.
+        .contentShape(Rectangle())
+        .onTapGesture { if !isExpanded { expand() } }
         .onHover { isHovering = $0 }
         .contextMenu { taskMenuItems }
         .popover(isPresented: $showDatePicker) {
@@ -184,22 +191,26 @@ struct TaskRowView: View {
     }
 
     private var collapsedContent: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 5) {
             Text(task.title.isEmpty ? "Untitled" : task.title)
                 .font(.system(size: 13.5, weight: .medium))
                 .strikethrough(task.isCompleted)
                 .foregroundStyle(task.isCompleted ? .secondary : .primary)
                 .lineLimit(2)
 
+            // Notes preview — plain Text so it doesn't intercept row tap gestures.
+            // Full clickable links are available in the expanded view.
             if let notes = task.notes, !notes.isEmpty {
                 HStack(alignment: .top, spacing: 4) {
                     Image(systemName: "text.alignleft")
                         .font(.system(size: 9))
                         .foregroundStyle(.tertiary)
                         .padding(.top, 1)
-                    LinkedTextView(text: notes, lineLimit: 1)
+                    Text(notes)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.tertiary)
+                        .lineLimit(1)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
 
@@ -220,76 +231,41 @@ struct TaskRowView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .contentShape(Rectangle())
-        .onTapGesture { expand() }
+        // No tap gesture here — handled by the parent VStack (.contentShape + .onTapGesture)
     }
 
     private var expandedContent: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
+            // Title
             TextField("Title", text: $editTitle, axis: .vertical)
                 .textFieldStyle(.plain)
                 .font(.system(size: 14, weight: .medium))
                 .focused($isEditFocused)
                 .onSubmit { saveDetail() }
 
-            // Description / notes — rendered markdown by default; tap to edit.
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .top, spacing: 6) {
-                    Image(systemName: "text.alignleft")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
-                        .padding(.top, 4)
-                    if editingNotes {
-                        TextEditor(text: $editNotes)
-                            .font(.system(size: 12, design: .monospaced))
-                            .foregroundStyle(.primary)
-                            .scrollContentBackground(.hidden)
-                            .frame(minHeight: 60, maxHeight: 200)
-                            .focused($isNotesFocused)
-                            .padding(4)
-                            .background(Color.primary.opacity(0.04))
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
-                    } else if editNotes.isEmpty {
-                        Text("Add notes... (supports **markdown**)")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.tertiary)
-                            .padding(.vertical, 3)
-                            .onTapGesture { startEditingNotes() }
-                    } else {
-                        MarkdownView(text: editNotes)
-                            .foregroundStyle(.secondary)
-                            .textSelection(.enabled)
-                            .padding(.vertical, 2)
-                            .contentShape(Rectangle())
-                            .onTapGesture { startEditingNotes() }
-                    }
-                }
-
-                // Markdown format toolbar — only visible while editing notes
-                if editingNotes {
-                    HStack(spacing: 2) {
-                        formatButton("B", help: "Bold", wrap: "**")
-                        formatButton("I", help: "Italic", wrap: "_")
-                        formatButton("—", help: "Strikethrough", wrap: "~~")
-                        Divider().frame(height: 14).padding(.horizontal, 2)
-                        formatPrefixButton("-", help: "Bullet list", prefix: "- ")
-                        formatPrefixButton("#", help: "Heading", prefix: "# ")
-                        Spacer()
-                        Button {
-                            editingNotes = false
-                        } label: {
-                            Text("Preview")
-                                .font(.system(size: 10))
-                                .foregroundStyle(.secondary)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    .padding(.leading, 17)
-                    .padding(.top, 4)
-                }
+            // Notes — inline, no background, no toolbar. Click rendered text to edit.
+            if editingNotes {
+                TextEditor(text: $editNotes)
+                    .font(.system(size: 13))
+                    .foregroundStyle(.secondary)
+                    .scrollContentBackground(.hidden)
+                    .frame(minHeight: 48, maxHeight: 220)
+                    .focused($isNotesFocused)
+                    .padding(.leading, -4) // align with title
+            } else if editNotes.isEmpty {
+                Text("Add notes…")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.tertiary)
+                    .onTapGesture { startEditingNotes() }
+            } else {
+                MarkdownView(text: editNotes)
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+                    .contentShape(Rectangle())
+                    .onTapGesture { startEditingNotes() }
             }
 
-            // Quick controls
+            // Bottom bar: date + Done
             HStack(spacing: 8) {
                 Button {
                     openDatePicker()
@@ -310,6 +286,7 @@ struct TaskRowView: View {
 
                 doneButton
             }
+            .padding(.top, 2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 4)
