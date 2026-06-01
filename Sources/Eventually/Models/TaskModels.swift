@@ -36,6 +36,21 @@ struct GTask: Identifiable, Codable, Hashable {
     var isCompleted: Bool { status == .completed }
     var isSubtask: Bool { parent != nil }
 
+    /// Recurring metadata (computed by GoogleTasksService)
+    var isRecurring: Bool = false
+    var recurrencePattern: RecurrencePattern?
+
+    enum RecurrencePattern: String, Codable {
+        case daily = "Daily"
+        case weekly = "Weekly"
+        case biweekly = "Biweekly"
+        case monthly = "Monthly"
+
+        var icon: String {
+            return "arrow.clockwise"
+        }
+    }
+
     /// Google stores `due` as a date anchored to UTC midnight. This returns the
     /// LOCAL midnight Date for that same calendar day, so comparisons against
     /// the user's local "today" land in the right day bucket.

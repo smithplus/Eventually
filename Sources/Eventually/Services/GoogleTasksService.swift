@@ -106,11 +106,13 @@ class GoogleTasksService: ObservableObject {
         do {
             let data = try await get("/lists/\(listId)/tasks?showCompleted=false&maxResults=100", token: token)
             let response = try JSONDecoder().decode(TasksResponse.self, from: data)
-            let items = (response.items ?? []).map { item -> GTask in
+            var items = (response.items ?? []).map { item -> GTask in
                 var t = item
                 t.listId = listId
                 return t
             }
+            // Detect recurring patterns
+            items = detectRecurringPatterns(in: items)
             tasks[listId] = items
         } catch {
             self.error = error.localizedDescription
@@ -582,6 +584,89 @@ class GoogleTasksService: ObservableObject {
         }
         error = nil
         return data
+    }
+
+    // MARK: - Recurring Pattern Detection
+
+    /// Detect recurring patterns by grouping tasks with identical titles and
+    /// checking if their due dates follow a regular interval.
+    private func detectRecurringPatterns(in tasks: [GTask]) -> [GTask] {
+        // Group by normalized title (case-insensitive, trimmed)
+        let grouped = Dictionary(grouping: tasks) { task in
+            task.title.lowercased().trimmingCharacters(in: .whitespaces)
+        }
+
+        var result: [GTask] = []
+
+        for (_, instances) in grouped {
+            guard instances.count >= 2 else {
+                // Single instance → not recurring
+                result.append(contentsOf: instances)
+                continue
+            }
+
+            // Sort by due date
+            let sorted = instances
+                .filter { $0.dueDay != nil }
+                .sorted { ($0.dueDay ?? Date.distantPast) < ($1.dueDay ?? Date.distantPast) }
+
+            guard sorted.count >= 2 else {
+                // Not enough dated instances
+                result.append(contentsOf: instances)
+                continue
+            }
+
+            // Calculate intervals between consecutive dates
+            var intervals: [Int] = []
+            for i in 0..<(sorted.count - 1) {
+                if let from = sorted[i].dueDay, let to = sorted[i + 1].dueDay {
+                    let days = Calendar.current.dateComponents([.day], from: from, to: to).day ?? 0
+                    intervals.append(days)
+                }
+            }
+
+            guard !intervals.isEmpty else {
+                result.append(contentsOf: instances)
+                continue
+            }
+
+            // Check if all intervals are similar (±1 day tolerance for DST/leap days)
+            let avgInterval = intervals.reduce(0, +) / intervals.count
+            let isRegular = intervals.allSatisfy { abs($0 - avgInterval) <= 1 }
+
+            if isRegular, let pattern = patternForInterval(avgInterval) {
+                // Mark all instances as recurring with the detected pattern
+                let marked = sorted.map { task -> GTask in
+                    var t = task
+                    t.isRecurring = true
+                    t.recurrencePattern = pattern
+                    return t
+                }
+
+                // Only show the FIRST (closest) instance, hide future duplicates
+                if let first = marked.first {
+                    result.append(first)
+                }
+                // Add any instances without due dates (edge case)
+                result.append(contentsOf: instances.filter { $0.dueDay == nil })
+            } else {
+                // Not a regular pattern → show all
+                result.append(contentsOf: instances)
+            }
+        }
+
+        return result
+    }
+
+    /// Map interval in days to a recurrence pattern.
+    private func patternForInterval(_ days: Int) -> GTask.RecurrencePattern? {
+        switch days {
+        case 1:         return .daily
+        case 7:         return .weekly
+        case 14:        return .biweekly
+        case 28...31:   return .monthly
+        default:        return nil
+        }
     }
 }
 

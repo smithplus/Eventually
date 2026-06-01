@@ -195,14 +195,17 @@ struct TaskRowView: View {
                 .foregroundStyle(.tertiary)
             }
 
-            // Metadata row: due date + list badge
-            if (showDateBadge && task.dueDay != nil) || (showListBadge && task.listId != nil) {
+            // Metadata row: due date + list badge + recurrence
+            if (showDateBadge && task.dueDay != nil) || (showListBadge && task.listId != nil) || task.isRecurring {
                 HStack(spacing: 6) {
                     if showDateBadge, let due = task.dueDay {
                         dueBadge(due)
                     }
                     if showListBadge, let listId = task.listId {
                         listBadge(listId)
+                    }
+                    if task.isRecurring {
+                        recurrenceBadge
                     }
                 }
                 .padding(.top, 2)
@@ -313,6 +316,22 @@ struct TaskRowView: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .background(color.opacity(0.12))
+        .clipShape(Capsule())
+    }
+
+    private var recurrenceBadge: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "arrow.clockwise")
+                .font(.system(size: 9))
+            if let pattern = task.recurrencePattern {
+                Text(pattern.rawValue)
+                    .font(.system(size: 11))
+            }
+        }
+        .foregroundStyle(.secondary)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(Color.secondary.opacity(0.1))
         .clipShape(Capsule())
     }
 
