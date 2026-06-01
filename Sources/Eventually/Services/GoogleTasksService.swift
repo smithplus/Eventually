@@ -18,9 +18,11 @@ class GoogleTasksService: ObservableObject {
     // MARK: - Task Lists
 
     func fetchTaskLists() async {
-        guard let token = await authService?.validAccessToken() else { return }
         isLoading = true
         error = nil
+        defer { isLoading = false }  // always clears loading, even if token fetch fails
+
+        guard let token = await authService?.validAccessToken() else { return }
 
         do {
             let data = try await get("/users/@me/lists", token: token)
@@ -37,8 +39,6 @@ class GoogleTasksService: ObservableObject {
         } catch {
             self.error = error.localizedDescription
         }
-
-        isLoading = false
     }
 
     // MARK: - List CRUD
