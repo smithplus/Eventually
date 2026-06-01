@@ -77,10 +77,10 @@ Critical refinements before starting Linear integration:
 - [x] **Keyboard navigation refinement** — 12 conflicts resolved in build 3 audit ✅
 
 ### P1 — High priority
-- [ ] **Drag & drop reorder** — reorder tasks within a list (medium effort)
-- [ ] **Clickable URLs in notes** — detect links and make them clickable (low effort)
-- [ ] **Better description input** — improved UX for editing long notes with markdown
-- [ ] **Auto-updates (Sparkle)** — app currently does NOT check for updates; integrate Sparkle for non-App Store distribution
+- [x] **Drag & drop reorder** — reorder tasks within a list ✅ build 4
+- [x] **Clickable URLs in notes** — auto-detected, clickable in collapsed and expanded view ✅ build 4
+- [x] **Better description input** — monospaced editor + markdown format toolbar (B/I/~~/ - /#) + preview toggle ✅ build 4
+- [x] **Auto-updates (Sparkle)** — integrated Sparkle 2.9.2, "Check for Updates" in Settings ✅ build 4
 
 ### P2 — Nice to have
 - [ ] **Functional widget** — currently a placeholder; needs App Group + real cache

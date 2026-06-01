@@ -434,6 +434,30 @@ class GoogleTasksService: ObservableObject {
         }
     }
 
+    /// Reorder a task within its list by moving it after `previousTaskId` (nil = move to top).
+    /// Uses the Google Tasks `move` endpoint: POST /lists/{list}/tasks/{task}/move
+    func reorderTask(_ task: GTask, afterTaskId previousTaskId: String?) async {
+        guard let listId = task.listId,
+              let token = await authService?.validAccessToken() else { return }
+
+        var urlString = "/lists/\(listId)/tasks/\(task.id)/move"
+        if let prev = previousTaskId {
+            urlString += "?previous=\(prev)"
+        }
+
+        do {
+            let data = try await post(urlString, body: [:], token: token)
+            let updated = try JSONDecoder().decode(GTask.self, from: data)
+            // Update position locally — optimistic reorder already happened in the UI
+            if let idx = tasks[listId]?.firstIndex(where: { $0.id == task.id }) {
+                tasks[listId]?[idx].position = updated.position
+            }
+        } catch {
+            self.error = "Failed to reorder task"
+            await reconcile(listId)
+        }
+    }
+
     // MARK: - Batch operations (multi-select)
 
     func completeTasks(_ items: [GTask]) async {

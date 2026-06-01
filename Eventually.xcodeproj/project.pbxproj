@@ -12,12 +12,14 @@
 		399F66E6CB82002F57B8B231 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20565DAADB6235DC3B64A787 /* LoginView.swift */; };
 		3D3A0022DFB368013165FC91 /* QuickAddWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCB7C97EEC7AB129BF3A4E6C /* QuickAddWindowController.swift */; };
 		49E879DC0C13473232B06B83 /* MarkdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F6E049E999523995112CAF7 /* MarkdownView.swift */; };
+		4F7552093D7F67FF732F6BD0 /* UpdateService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50B7C4665A548BBD50CED819 /* UpdateService.swift */; };
 		52E924ED2F2AC997960E7B7D /* QuickAddPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6777E7409B02B8B37FE60F57 /* QuickAddPanel.swift */; };
 		70C38DC9266521F00548E4C7 /* ShortcutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9C036A8E5F3FC19ECEBDEA3 /* ShortcutManager.swift */; };
 		8139D84924D6DC7A43D2AB8D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09C022D34494F4FA32D62690 /* SettingsView.swift */; };
 		8E86124ED6AE9442EEF7F215 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E5CE035B63564A2A4686736 /* Config.swift */; };
 		921AEED93FF69DE9D6CF85DA /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7785FD9FC6FF4B5F94A887E3 /* AuthService.swift */; };
 		948C6C13421888D359E0846C /* AppConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 724F39E60C872F080A124F79 /* AppConstants.swift */; };
+		A18C291BEFE3B7CD1187035C /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 297A3E230AB5E93DB1E1A2BB /* Sparkle */; };
 		A4E71FAD9A46496658047D23 /* GoogleTasksService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65B0024D67F8B4DCAA6CF4A5 /* GoogleTasksService.swift */; };
 		AC97E210DCEE6D4031369C0D /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = B98465F1B18E321E5210D60B /* DesignTokens.swift */; };
 		B7E080C74D34ABF9C26CD0C2 /* QuickAddParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 699C1E7817C57A3E603589F1 /* QuickAddParser.swift */; };
@@ -48,6 +50,7 @@
 		2528313113D8A00B1D2BF5C3 /* TaskRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskRowView.swift; sourceTree = "<group>"; };
 		25F6609DD047E8F54EDCE196 /* Eventually.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Eventually.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4E5CE035B63564A2A4686736 /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
+		50B7C4665A548BBD50CED819 /* UpdateService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateService.swift; sourceTree = "<group>"; };
 		51948592E6C1A2BC89173750 /* Eventually.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Eventually.entitlements; sourceTree = "<group>"; };
 		65B0024D67F8B4DCAA6CF4A5 /* GoogleTasksService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleTasksService.swift; sourceTree = "<group>"; };
 		6777E7409B02B8B37FE60F57 /* QuickAddPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAddPanel.swift; sourceTree = "<group>"; };
@@ -74,6 +77,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				EBC0BEA6555B0E5475C8F342 /* KeyboardShortcuts in Frameworks */,
+				A18C291BEFE3B7CD1187035C /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -147,6 +151,7 @@
 				7785FD9FC6FF4B5F94A887E3 /* AuthService.swift */,
 				65B0024D67F8B4DCAA6CF4A5 /* GoogleTasksService.swift */,
 				699C1E7817C57A3E603589F1 /* QuickAddParser.swift */,
+				50B7C4665A548BBD50CED819 /* UpdateService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -186,6 +191,7 @@
 			name = Eventually;
 			packageProductDependencies = (
 				F9FD94E5E45A0B66BA9218F0 /* KeyboardShortcuts */,
+				297A3E230AB5E93DB1E1A2BB /* Sparkle */,
 			);
 			productName = Eventually;
 			productReference = 25F6609DD047E8F54EDCE196 /* Eventually.app */;
@@ -260,6 +266,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				864ADD11C136458F204DD370 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
+				9D07F40DF2FFE54D932D6397 /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = F520D5E2F288A04883BC0E08 /* Products */;
@@ -295,6 +302,7 @@
 				70C38DC9266521F00548E4C7 /* ShortcutManager.swift in Sources */,
 				0180B6FF3AF4E8BCBBFD1BF9 /* TaskModels.swift in Sources */,
 				E6DAC533697E665F6E22D506 /* TaskRowView.swift in Sources */,
+				4F7552093D7F67FF732F6BD0 /* UpdateService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -389,7 +397,7 @@
 				CODE_SIGN_ENTITLEMENTS = Sources/Eventually/Eventually.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = "";
@@ -500,7 +508,7 @@
 				CODE_SIGN_ENTITLEMENTS = Sources/Eventually/Eventually.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = "";
@@ -599,9 +607,22 @@
 				minimumVersion = 2.2.0;
 			};
 		};
+		9D07F40DF2FFE54D932D6397 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		297A3E230AB5E93DB1E1A2BB /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9D07F40DF2FFE54D932D6397 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
 		F9FD94E5E45A0B66BA9218F0 /* KeyboardShortcuts */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 864ADD11C136458F204DD370 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;

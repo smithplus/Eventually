@@ -77,3 +77,48 @@ struct MarkdownView: View {
         )) ?? AttributedString(string)
     }
 }
+
+/// Renders plain text with auto-detected clickable URLs.
+/// Used for the collapsed notes preview and anywhere markdown isn't needed.
+struct LinkedTextView: NSViewRepresentable {
+    let text: String
+    var font: NSFont = .systemFont(ofSize: 11)
+    var textColor: NSColor = .tertiaryLabelColor
+    var lineLimit: Int = 1
+
+    func makeNSView(context: Context) -> NSTextField {
+        let field = NSTextField(wrappingLabelWithString: "")
+        field.isEditable = false
+        field.isSelectable = true
+        field.allowsEditingTextAttributes = true  // required for link clicks
+        field.backgroundColor = .clear
+        field.maximumNumberOfLines = lineLimit
+        field.lineBreakMode = lineLimit == 1 ? .byTruncatingTail : .byWordWrapping
+        return field
+    }
+
+    func updateNSView(_ field: NSTextField, context: Context) {
+        let attributed = NSMutableAttributedString(string: text)
+        let range = NSRange(text.startIndex..., in: text)
+
+        // Base style
+        attributed.addAttributes([
+            .font: font,
+            .foregroundColor: textColor
+        ], range: range)
+
+        // Detect and link URLs
+        let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
+        detector?.enumerateMatches(in: text, range: range) { match, _, _ in
+            guard let match, let url = match.url else { return }
+            attributed.addAttributes([
+                .link: url,
+                .foregroundColor: NSColor.linkColor,
+                .underlineStyle: NSUnderlineStyle.single.rawValue
+            ], range: match.range)
+        }
+
+        field.attributedStringValue = attributed
+        field.maximumNumberOfLines = lineLimit
+    }
+}

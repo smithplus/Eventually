@@ -48,5 +48,9 @@
 	<string>Google Tasks in your menu bar</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>SUFeedURL</key>
+	<string>https://github.com/smithplus/Eventually/releases/latest/download/appcast.xml</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
 </dict>
 </plist>

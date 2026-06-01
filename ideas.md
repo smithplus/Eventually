@@ -79,3 +79,7 @@ Feasibility legend:
 - ✅ Reliability audit (9 critical bugs fixed)
 - ✅ Text editing UX fix (Space/Enter respect active text fields)
 - ✅ Comprehensive UX audit — 12 keyboard/focus/state conflicts resolved (build 3)
+- ✅ Clickable URLs in notes (auto-detected, build 4)
+- ✅ Better description input — monospaced editor + format toolbar + preview toggle (build 4)
+- ✅ Drag & drop reorder — tasks reorder via Google Tasks API (build 4)
+- ✅ Auto-updates via Sparkle 2.9.2 — "Check for Updates" in Settings (build 4)

@@ -1,6 +1,7 @@
 import SwiftUI
 import KeyboardShortcuts
 import ServiceManagement
+import Sparkle
 
 struct SettingsView: View {
     @EnvironmentObject var authService: AuthService
@@ -145,14 +146,21 @@ struct AccountSettingsTab: View {
 
             Spacer()
 
-            // Version info
-            if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
-               let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
-                Text("Eventually v\(version) (build \(build))")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .padding(.bottom, 8)
+            // Version + update check
+            VStack(spacing: 8) {
+                if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
+                   let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
+                    Text("Eventually v\(version) (build \(build))")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Button("Check for Updates…") {
+                    UpdateService.shared.checkForUpdates()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
             }
+            .padding(.bottom, 8)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding()

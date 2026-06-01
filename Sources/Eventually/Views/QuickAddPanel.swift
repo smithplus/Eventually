@@ -740,9 +740,13 @@ struct QuickAddPanel: View {
                             }
                         }
                     } else {
-                        // No grouping: show both badges
+                        // No grouping: show both badges + drag to reorder (only in single-list "My Order" view)
                         ForEach(activeTasks) { taskRow($0, showListBadge: panelFilter.isSmart || showSearch, showDateBadge: true)
                             .id($0.task.id)
+                            .draggable($0.task.id)
+                        }
+                        .dropDestination(for: String.self) { droppedIDs, location in
+                            handleReorder(droppedIDs: droppedIDs, in: activeTasks)
                         }
                     }
 
@@ -958,6 +962,22 @@ struct QuickAddPanel: View {
         clearSelection()
         listFocused = false
         nameFocused = true
+    }
+
+    /// Handle drag-to-reorder drop: move the dragged task after the task at the drop location.
+    @discardableResult
+    private func handleReorder(droppedIDs: [String], in rows: [GoogleTasksService.OrderedTask]) -> Bool {
+        guard let draggedID = droppedIDs.first,
+              let draggedRow = rows.first(where: { $0.task.id == draggedID }),
+              let draggedIndex = rows.firstIndex(where: { $0.task.id == draggedID }) else { return false }
+
+        // Drop at end: move after the last task
+        let targetIndex = rows.count - 1
+        guard targetIndex != draggedIndex else { return false }
+
+        let previousTaskId = targetIndex > 0 ? rows[targetIndex].task.id : nil
+        Task { await tasksService.reorderTask(draggedRow.task, afterTaskId: previousTaskId) }
+        return true
     }
 
     /// Reset cursor and prune selection to visible rows when the view changes.

@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 import KeyboardShortcuts
 import Combine
+import Sparkle
 
 @MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
@@ -10,6 +11,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     let authService = AuthService()
     let tasksService = GoogleTasksService()
     let shortcutManager = ShortcutManager()
+    let updateService = UpdateService.shared
     private lazy var quickAdd = QuickAddWindowController(authService: authService, tasksService: tasksService)
     private lazy var settings = SettingsWindowController(authService: authService, tasksService: tasksService, shortcutManager: shortcutManager)
     private var cancellables = Set<AnyCancellable>()

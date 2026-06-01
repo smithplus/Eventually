@@ -192,14 +192,15 @@ struct TaskRowView: View {
                 .lineLimit(2)
 
             if let notes = task.notes, !notes.isEmpty {
-                HStack(spacing: 4) {
+                HStack(alignment: .top, spacing: 4) {
                     Image(systemName: "text.alignleft")
                         .font(.system(size: 9))
-                    Text(markdown(notes))
-                        .lineLimit(isExpanded ? 8 : 1)
+                        .foregroundStyle(.tertiary)
+                        .padding(.top, 1)
+                    LinkedTextView(text: notes, lineLimit: 1)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                .font(.system(size: 11))
-                .foregroundStyle(.tertiary)
             }
 
             // Metadata row: due date + list badge + recurrence
@@ -231,32 +232,60 @@ struct TaskRowView: View {
                 .focused($isEditFocused)
                 .onSubmit { saveDetail() }
 
-            // Description / notes — rendered markdown by default; tap to edit the source.
-            HStack(alignment: .top, spacing: 6) {
-                Image(systemName: "text.alignleft")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                    .padding(.top, 4)
+            // Description / notes — rendered markdown by default; tap to edit.
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .top, spacing: 6) {
+                    Image(systemName: "text.alignleft")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 4)
+                    if editingNotes {
+                        TextEditor(text: $editNotes)
+                            .font(.system(size: 12, design: .monospaced))
+                            .foregroundStyle(.primary)
+                            .scrollContentBackground(.hidden)
+                            .frame(minHeight: 60, maxHeight: 200)
+                            .focused($isNotesFocused)
+                            .padding(4)
+                            .background(Color.primary.opacity(0.04))
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                    } else if editNotes.isEmpty {
+                        Text("Add notes... (supports **markdown**)")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.tertiary)
+                            .padding(.vertical, 3)
+                            .onTapGesture { startEditingNotes() }
+                    } else {
+                        MarkdownView(text: editNotes)
+                            .foregroundStyle(.secondary)
+                            .textSelection(.enabled)
+                            .padding(.vertical, 2)
+                            .contentShape(Rectangle())
+                            .onTapGesture { startEditingNotes() }
+                    }
+                }
+
+                // Markdown format toolbar — only visible while editing notes
                 if editingNotes {
-                    TextEditor(text: $editNotes)
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                        .scrollContentBackground(.hidden)
-                        .frame(minHeight: 36, maxHeight: 180)
-                        .focused($isNotesFocused)
-                } else if editNotes.isEmpty {
-                    Text("Add description · markdown")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.tertiary)
-                        .padding(.vertical, 3)
-                        .onTapGesture { startEditingNotes() }
-                } else {
-                    MarkdownView(text: editNotes)
-                        .foregroundStyle(.secondary)
-                        .textSelection(.enabled)
-                        .padding(.vertical, 2)
-                        .contentShape(Rectangle())
-                        .onTapGesture { startEditingNotes() }
+                    HStack(spacing: 2) {
+                        formatButton("B", help: "Bold", wrap: "**")
+                        formatButton("I", help: "Italic", wrap: "_")
+                        formatButton("—", help: "Strikethrough", wrap: "~~")
+                        Divider().frame(height: 14).padding(.horizontal, 2)
+                        formatPrefixButton("-", help: "Bullet list", prefix: "- ")
+                        formatPrefixButton("#", help: "Heading", prefix: "# ")
+                        Spacer()
+                        Button {
+                            editingNotes = false
+                        } label: {
+                            Text("Preview")
+                                .font(.system(size: 10))
+                                .foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.leading, 17)
+                    .padding(.top, 4)
                 }
             }
 
@@ -365,6 +394,52 @@ struct TaskRowView: View {
     private func cancelSubtask() {
         showSubtaskInput = false
         subtaskTitle = ""
+    }
+
+    // MARK: - Markdown format helpers
+
+    /// Wraps the selected text (or inserts markers at cursor) with a markdown wrapper like **bold**.
+    private func formatButton(_ label: String, help: String, wrap: String) -> some View {
+        Button {
+            editNotes = applyWrap(wrap, to: editNotes)
+        } label: {
+            Text(label == "I" ? "_\(label)_" : label)
+                .font(.system(size: 11, weight: label == "B" ? .bold : .regular))
+                .italic(label == "I")
+                .frame(width: 22, height: 18)
+                .background(Color.primary.opacity(0.06))
+                .clipShape(RoundedRectangle(cornerRadius: 4))
+        }
+        .buttonStyle(.plain)
+        .help(help)
+    }
+
+    private func formatPrefixButton(_ label: String, help: String, prefix: String) -> some View {
+        Button {
+            // Prepend prefix to the last line
+            let lines = editNotes.components(separatedBy: "\n")
+            if var last = lines.last, !last.hasPrefix(prefix) {
+                last = prefix + last
+                editNotes = (lines.dropLast() + [last]).joined(separator: "\n")
+            }
+        } label: {
+            Text(label)
+                .font(.system(size: 11, weight: .medium))
+                .frame(width: 22, height: 18)
+                .background(Color.primary.opacity(0.06))
+                .clipShape(RoundedRectangle(cornerRadius: 4))
+        }
+        .buttonStyle(.plain)
+        .help(help)
+    }
+
+    private func applyWrap(_ wrap: String, to text: String) -> String {
+        // If text ends with the wrap markers, toggle them off
+        let marker = wrap + wrap
+        if text.contains(marker) {
+            return text.replacingOccurrences(of: marker, with: "")
+        }
+        return text + wrap + wrap
     }
 
     private func expand() {
