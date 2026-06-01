@@ -1,6 +1,6 @@
 # Eventually
 
-> Google Tasks en tu menu bar de macOS. Nativo, rápido, sin Electron.
+> Google Tasks in your macOS menu bar. Native, fast, no Electron.
 
 *"Get things done. Eventually."*
 
@@ -8,60 +8,60 @@
 
 ## Features
 
-- **Command Window flotante** — quick-capture estilo Raycast con `⌘⇧O`
-- **Smart views**: Today, Upcoming, All Tasks + listas personalizadas
-- **Natural language input**: `#lista` y `!fecha` (`!mañana`, `!4dias`, etc.)
-- **Keyboard-first**: navegación completa por teclado, multi-select, bulk actions
-- **Markdown rendering** en notas (headings, bullets, inline styles)
-- **Group by date / list** con headers colapsables
-- **Recurring task detection** — detecta patrones y muestra badge ↻ Weekly/Monthly
-- **Completed tasks section** — sección colapsable con animaciones smooth
-- **Uncomplete tasks** — click checkbox en completadas para deshacer
+- **Floating Command Window** — quick-capture Raycast-style with `⌘⇧O`
+- **Smart views**: Today, Upcoming, All Tasks + custom lists
+- **Natural language input**: `#list` and `!date` (`!tomorrow`, `!4days`, `!friday`, etc.)
+- **Keyboard-first**: full keyboard navigation, multi-select, bulk actions
+- **Markdown rendering** in notes (headings, bullets, inline styles)
+- **Group by date / list** with collapsible headers
+- **Recurring task detection** — detects patterns and shows ↻ Weekly/Monthly badge
+- **Completed tasks section** — collapsible section with smooth animations
+- **Uncomplete tasks** — click checkbox on completed tasks to undo
 - **Auto-refresh** configurable (5/15/30 min)
-- **Draft persistence** — borrador sobrevive al cerrar la app
-- Widget de escritorio small y medium (WidgetKit)
-- Login con Google OAuth 2.0 — tokens guardados localmente
+- **Draft persistence** — draft survives closing the app
+- Desktop widget small and medium (WidgetKit)
+- Sign in with Google OAuth 2.0 — tokens stored locally in Keychain
 
-## Cómo funciona el login
+## How login works
 
-Eventually usa **tu cuenta de Google** para acceder a tus tareas. No necesitás crear ninguna API key ni cuenta de desarrollador — solo hacés click en "Sign in with Google", se abre el browser, autorizás la app y listo. El token queda guardado en el Keychain de tu Mac.
+Eventually uses **your Google account** to access your tasks. You don't need to create any API key or developer account — just click "Sign in with Google", your browser opens, you authorize the app, and you're done. The token is saved in your Mac's Keychain.
 
-## Requisitos
+## Requirements
 
-- macOS 13 Ventura o superior
+- macOS 13 Ventura or later
 - Xcode 15+
-- Cuenta de Google con Google Tasks activado
+- Google account with Google Tasks enabled
 
-## Instalación (desde código)
+## Installation (from source)
 
 ```bash
 git clone https://github.com/smithplus/Eventually.git
 cd Eventually
 brew install xcodegen
-cp Config.template.swift Sources/Eventually/Config.swift   # luego pegá tus credenciales
+cp Config.template.swift Sources/Eventually/Config.swift   # paste your OAuth credentials
 xcodegen generate
 open Eventually.xcodeproj
 ```
 
-En Xcode: seleccionar signing team → `Cmd+R`
+In Xcode: select your signing team → `Cmd+R`
 
 ## Shortcuts
 
-| Shortcut | Acción |
+| Shortcut | Action |
 |---|---|
-| `⌘⇧O` | Abrir / cerrar Command Window |
-| `Tab` (en input) | Ir al list/date autocomplete (↑/↓ navegan, Enter acepta) |
-| `Tab` (sin autocomplete) | Foco a la lista de tareas |
-| `↑/↓` (en lista) | Navegar cursor |
-| `⌘+Click` | Toggle selección individual |
-| `Return` | Completar tareas seleccionadas |
-| `Delete` | Borrar tareas seleccionadas |
-| `⌘A` | Seleccionar todas visibles |
-| `Esc` / `Tab` | Volver al input |
+| `⌘⇧O` | Open / close Command Window |
+| `Tab` (in input) | Go to list/date autocomplete (↑/↓ navigate, Enter accepts) |
+| `Tab` (no autocomplete) | Focus task list for keyboard navigation |
+| `↑/↓` (in list) | Move cursor |
+| `⌘+Click` | Toggle individual task selection |
+| `Return` | Complete selected tasks |
+| `Delete` | Delete selected tasks |
+| `⌘A` | Select all visible tasks |
+| `Esc` / `Tab` | Return to input |
 
-Customizables en **Settings**.
+Customizable in **Settings**.
 
-## Estructura del proyecto
+## Project structure
 
 ```
 Sources/
@@ -69,7 +69,7 @@ Sources/
 │   ├── EventuallyApp.swift              Entry point
 │   ├── AppDelegate.swift                Menu bar + auto-refresh + badge
 │   ├── QuickAddWindowController.swift   Command Window lifecycle
-│   ├── Config.swift                     Credenciales OAuth (git-ignored)
+│   ├── Config.swift                     OAuth credentials (git-ignored)
 │   ├── Models/
 │   │   └── TaskModels.swift             GTask, TaskList, dueDay (timezone fix)
 │   ├── Services/
@@ -83,13 +83,13 @@ Sources/
 │       ├── SettingsView.swift           Preferences + appearance + auto-refresh
 │       └── LoginView.swift              OAuth flow UI
 └── EventuallyWidget/
-    └── EventuallyWidget.swift            Widget WidgetKit (placeholder)
+    └── EventuallyWidget.swift           WidgetKit widget (placeholder)
 ```
 
-## Dependencias
+## Dependencies
 
-- [KeyboardShortcuts](https://github.com/sindresorhus/KeyboardShortcuts) — shortcuts globales customizables
+- [KeyboardShortcuts](https://github.com/sindresorhus/KeyboardShortcuts) — customizable global shortcuts
 
 ## Roadmap
 
-Ver [PLAN.md](PLAN.md).
+See [PLAN.md](PLAN.md).

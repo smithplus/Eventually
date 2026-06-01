@@ -1,81 +1,81 @@
-# Ideas — features de interés
+# Ideas — features of interest
 
-> Investigación de TickTick, Raycast y apps similares (mayo 2026).
-> **Esto es solo un menú de ideas. Qué se implementa lo decidís vos.**
-> Marcado por viabilidad con la API pública de Google Tasks y esfuerzo estimado.
+> Research from TickTick, Raycast, and similar apps (May 2026).
+> **This is just a menu of ideas. What gets built is your call.**
+> Marked by feasibility with the public Google Tasks API and estimated effort.
 
-Leyenda de viabilidad:
-- ✅ Factible con la API de Google Tasks
-- ⚠️ Parcial — requiere almacenamiento local (la API no lo expone)
-- ❌ Imposible con la API actual (Google Tasks no lo soporta)
-
----
-
-## De Raycast (quick-capture / launcher)
-
-| Idea | Qué es | Viabilidad | Esfuerzo |
-|---|---|---|---|
-| **Clipboard → task** | Botón/atajo que crea una tarea con lo que tengas en el portapapeles | ✅ | Bajo |
-| **Snippets / templates** | Plantillas de tareas frecuentes (ej. "Reunión semanal #Work") insertables con un atajo | ⚠️ (local) | Bajo |
-| **Aliases de listas** | Escribir `#w` → resuelve a "Work" (alias cortos configurables) | ⚠️ (local) | Bajo |
-| **Quicklink "abrir en Google Tasks"** | Acción por tarea para abrirla en tasks.google.com | ✅ | Bajo |
-| **Acciones rápidas con ⌘K** | Menú de acciones contextual sobre la tarea seleccionada (estilo Raycast) | ✅ | Medio |
-| **Navegación 100% teclado** | Flechas para moverse por la lista, Enter para completar/expandir, sin mouse | ✅ Hecho (parcial) | — |
-| **Hyperkey / atajo configurable** | Ya tenés shortcut global configurable | ✅ Hecho | — |
-
-## De TickTick (gestión)
-
-| Idea | Qué es | Viabilidad | Esfuerzo |
-|---|---|---|---|
-| **Agrupado por fecha** | Secciones Vencidas / Hoy / Mañana / Esta semana | ✅ Hecho | — |
-| **Vista de completadas** | Toggle para ver/ocultar las tareas hechas | ✅ | Bajo |
-| **Pomodoro timer** | Timer de foco 25/5 sobre una tarea, con stats | ⚠️ (local) | Medio |
-| **Habit tracking** | Hábitos diarios con racha (separado de las tareas) | ⚠️ (local) | Alto |
-| **Eisenhower Matrix** | Cuadrante urgente/importante por prioridad | ❌ (Google Tasks no tiene prioridad) | — |
-| **Vista calendario** | Tareas con fecha en una grilla mensual/semanal | ✅ | Alto |
-| **Recordatorios / notificaciones** | Notificación local cuando una tarea vence hoy | ✅ (fecha) / ⚠️ (hora) | Medio |
-| **Recurrencia** | Tareas que se repiten (diaria/semanal) | ❌ vía API (no se puede leer/escribir) | — |
-| **Prioridades** | Alta/Media/Baja | ❌ (no existe en Google Tasks) | — |
-| **Hora de vencimiento** | "Mañana 8:00" | ❌ (la API solo guarda fecha) | — |
-
-## De apps de menu bar / utilidad
-
-| Idea | Qué es | Viabilidad | Esfuerzo |
-|---|---|---|---|
-| **Badge con contador** | Número de tareas de hoy en el ícono del menu bar | ✅ Hecho | — |
-| **Launch at login** | Ya está el toggle, falta cablear `SMAppService` | ✅ Hecho | — |
-| **Auto-refresh** | Refrescar cada X min y al abrir | ✅ Hecho | — |
-| **Widget de escritorio real** | Cablear el App Group + escribir cache (hoy muestra placeholder) | ✅ | Medio |
-| **Drag & drop reordenar** | Reordenar tareas dentro de una lista | ✅ | Medio |
-| **Crear/renombrar/borrar listas** | Gestión de listas desde la app | ✅ Hecho | — |
-| **Detección de URLs en notas** | Links clickeables en la descripción | ✅ | Bajo |
-| **Markdown en notas** | Render básico de la descripción | ✅ Hecho | — |
-
-## Input / parsing (convención)
-
-| Idea | Qué es | Viabilidad | Esfuerzo |
-|---|---|---|---|
-| **Marcador explícito de fecha** | `!mañana` o `!viernes` (alternativa al lenguaje natural; evitar `@` por emails) | ✅ Hecho | — |
-| **Multi-cuenta con prefijo seguro** | `>>Work` para rutear a una cuenta/proveedor (ver issue #1) | ✅ | Alto |
-| **Más idiomas de fechas** | Ampliar el parser (fechas relativas tipo "en 3 días", "próximo mes") | ✅ | Bajo |
+Feasibility legend:
+- ✅ Feasible with Google Tasks API
+- ⚠️ Partial — requires local storage (API doesn't expose it)
+- ❌ Not possible with current API (Google Tasks doesn't support it)
 
 ---
 
-## Mi top 5 (relación valor / esfuerzo), para tu consideración
-1. ~~**Agrupado por fecha**~~ ✅ Hecho
-2. ~~**Badge con contador**~~ ✅ Hecho + **notificaciones de vencimiento** pendiente
-3. ~~**Navegación por teclado**~~ ✅ Hecho + **acciones ⌘K** pendiente
-4. ~~**Vista de completadas**~~ ✅ Hecho (sección colapsable + uncomplete)
-5. ~~**Recurrencia**~~ ✅ Hecho (detección automática por patrón + badge ↻)
+## From Raycast (quick-capture / launcher)
 
-## Completado recientemente (Junio 2026)
+| Idea | What it is | Feasibility | Effort |
+|---|---|---|---|
+| **Clipboard → task** | Button/shortcut that creates a task from clipboard contents | ✅ | Low |
+| **Snippets / templates** | Frequent task templates (e.g. "Weekly meeting #Work") insertable with a shortcut | ⚠️ (local) | Low |
+| **List aliases** | Type `#w` → resolves to "Work" (configurable short aliases) | ⚠️ (local) | Low |
+| **Quicklink "open in Google Tasks"** | Per-task action to open it at tasks.google.com | ✅ | Low |
+| **Quick actions with ⌘K** | Contextual action menu on selected task (Raycast-style) | ✅ | Medium |
+| **Full keyboard navigation** | Arrow keys to move through list, Enter to complete/expand, no mouse | ✅ Done (partial) | — |
+| **Hyperkey / configurable shortcut** | Already have a configurable global shortcut | ✅ Done | — |
+
+## From TickTick (task management)
+
+| Idea | What it is | Feasibility | Effort |
+|---|---|---|---|
+| **Group by date** | Sections: Overdue / Today / Tomorrow / This week | ✅ Done | — |
+| **Completed tasks view** | Toggle to show/hide completed tasks | ✅ Done | — |
+| **Pomodoro timer** | 25/5 focus timer on a task, with stats | ⚠️ (local) | Medium |
+| **Habit tracking** | Daily habits with streak (separate from tasks) | ⚠️ (local) | High |
+| **Eisenhower Matrix** | Urgent/important quadrant by priority | ❌ (Google Tasks has no priority) | — |
+| **Calendar view** | Tasks with dates in a monthly/weekly grid | ✅ | High |
+| **Reminders / notifications** | Local notification when a task is due today | ✅ (date) / ⚠️ (time) | Medium |
+| **Recurrence** | Repeating tasks (daily/weekly) | ❌ via API (can't read/write) | — |
+| **Priorities** | High/Medium/Low | ❌ (doesn't exist in Google Tasks) | — |
+| **Due time** | "Tomorrow 8:00am" | ❌ (API stores date only) | — |
+
+## From menu bar / utility apps
+
+| Idea | What it is | Feasibility | Effort |
+|---|---|---|---|
+| **Badge counter** | Number of today's tasks on the menu bar icon | ✅ Done | — |
+| **Launch at login** | Toggle is there, wired to `SMAppService` | ✅ Done | — |
+| **Auto-refresh** | Refresh every X min and on open | ✅ Done | — |
+| **Real desktop widget** | Wire App Group + write cache (currently shows placeholder) | ✅ | Medium |
+| **Drag & drop reorder** | Reorder tasks within a list | ✅ | Medium |
+| **Create/rename/delete lists** | List management from the app | ✅ Done | — |
+| **Clickable URLs in notes** | Clickable links in the description | ✅ | Low |
+| **Markdown in notes** | Basic rendering of the description | ✅ Done | — |
+
+## Input / parsing (conventions)
+
+| Idea | What it is | Feasibility | Effort |
+|---|---|---|---|
+| **Explicit date marker** | `!tomorrow` or `!friday` (alternative to natural language; avoid `@` due to emails) | ✅ Done | — |
+| **Multi-account with safe prefix** | `>>Work` to route to an account/provider (see issue #1) | ✅ | High |
+| **More date languages** | Expand the parser (relative dates like "in 3 days", "next month") | ✅ | Low |
+
+---
+
+## Top 5 (best value / effort ratio)
+1. ~~**Group by date**~~ ✅ Done
+2. ~~**Badge counter**~~ ✅ Done + **due date notifications** pending
+3. ~~**Keyboard navigation**~~ ✅ Done + **⌘K actions** pending
+4. ~~**Completed tasks view**~~ ✅ Done (collapsible section + uncomplete)
+5. ~~**Recurrence**~~ ✅ Done (auto-detection by pattern + ↻ badge)
+
+## Recently completed (June 2026)
 - ✅ Recurring task detection (Weekly/Monthly/Daily badges)
-- ✅ Completed tasks section (colapsable, animaciones)
-- ✅ Uncomplete tasks (click checkbox para deshacer)
-- ✅ Draft persistence (borrador sobrevive al cerrar)
+- ✅ Completed tasks section (collapsible, animations)
+- ✅ Uncomplete tasks (click checkbox to undo)
+- ✅ Draft persistence (draft survives app close)
 - ✅ Concurrent mutation guards (no duplicate requests)
 - ✅ Clear completed bulk action
 - ✅ Keyboard edit shortcut ('E' key)
-- ✅ Reliability audit completo (9 critical bugs fixed)
-- ✅ Text editing UX fix (Space/Enter respetan campos de texto activos)
-- ✅ Comprehensive UX audit — 12 keyboard/focus/state conflicts resueltos (build 3)
+- ✅ Reliability audit (9 critical bugs fixed)
+- ✅ Text editing UX fix (Space/Enter respect active text fields)
+- ✅ Comprehensive UX audit — 12 keyboard/focus/state conflicts resolved (build 3)

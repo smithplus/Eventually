@@ -1,140 +1,140 @@
-# Eventually — Plan de mejoras
+# Eventually — Improvement Plan
 
-## Add Task — UI expandida (inspirado en KiteTasks)
+## Add Task — Expanded UI (inspired by KiteTasks)
 
-**Referencia**: screenshot de KiteTasks con panel flotante
+**Reference**: KiteTasks floating panel screenshot
 
-### Diseño propuesto
-- Campo principal: "Task name" con hint `use # for list, @ for account`
-- Campo secundario: "Description / Notes" (collapsible o siempre visible)
+### Proposed design
+- Main field: "Task name" with hint `use # for list, @ for account`
+- Secondary field: "Description / Notes" (collapsible or always visible)
 - Quick date buttons: **Today** · **Tomorrow** · 📅 (date picker)
-- Footer: selector de lista `≡ My Tasks ▾` + cuenta `user@gmail.com`
-- Botones: **Cancel** · **Add task** (primary)
+- Footer: list selector `≡ My Tasks ▾` + account `user@gmail.com`
+- Buttons: **Cancel** · **Add task** (primary)
 
-### Comandos inline en el nombre de tarea
-| Comando | Acción |
+### Inline commands in task name
+| Command | Action |
 |---|---|
-| `#nombre` | Cambia a esa lista (ej. `#Work`) |
-| `@cuenta` | Selecciona cuenta (futuro multi-account) |
-| `hoy` / `mañana` / `lunes` | Asigna fecha via NLP |
+| `#name` | Switch to that list (e.g. `#Work`) |
+| `@account` | Select account (future multi-account) |
+| `today` / `tomorrow` / `monday` | Assign date via NLP |
 
-### Comportamiento
-- Se abre como ventana flotante separada del popover (no dentro de la lista)
-- Shortcut dedicado: ⌘+Shift+O
-- Al presionar Enter en el campo de nombre → foco pasa a Description
-- Tab navega entre campos
-- Escape cancela y cierra
-- ⌘+Enter confirma desde cualquier campo
+### Behavior
+- Opens as a floating window separate from the popover (not inside the list)
+- Dedicated shortcut: ⌘+Shift+O
+- Pressing Enter in the name field → focus moves to Description
+- Tab navigates between fields
+- Escape cancels and closes
+- ⌘+Enter confirms from any field
 
 ---
 
-## Multi-profile + multi-provider (futuro · GitHub issue)
+## Multi-profile + multi-provider (future · GitHub issue)
 
-**Idea**: el usuario crea perfiles (ej. **Personal**, **Work**) y elige qué proveedor de tareas usa cada uno: Google Tasks, Linear, TickTick, etc. Eventually se vuelve un front-end unificado sobre varios backends.
+**Idea**: the user creates profiles (e.g. **Personal**, **Work**) and chooses which task provider each one uses: Google Tasks, Linear, TickTick, etc. Eventually becomes a unified frontend over multiple backends.
 
-### Viabilidad de APIs investigada (mayo 2026)
+### API feasibility research (May 2026)
 
-| Proveedor | API pública | Auth | Veredicto |
+| Provider | Public API | Auth | Verdict |
 |---|---|---|---|
-| **Google Tasks** | REST oficial | OAuth 2.0 | ✅ Ya integrado |
-| **Linear** | GraphQL completa | OAuth 2.0 + API keys | ✅ Viable — ideal para "Work" |
-| **TickTick** | Open API (`api.ticktick.com/open/v1`) | OAuth 2.0 | ✅ Viable — scope limitado (CRUD básico de tareas/proyectos, rate limits) |
-| **Google Keep** | Solo enterprise | Workspace admin + domain-wide delegation | ❌ No viable para cuentas personales (no hay API de consumidor) |
+| **Google Tasks** | Official REST | OAuth 2.0 | ✅ Already integrated |
+| **Linear** | Full GraphQL | OAuth 2.0 + API keys | ✅ Viable — ideal for "Work" |
+| **TickTick** | Open API (`api.ticktick.com/open/v1`) | OAuth 2.0 | ✅ Viable — limited scope (basic task/project CRUD, rate limits) |
+| **Google Keep** | Enterprise only | Workspace admin + domain-wide delegation | ❌ Not viable for personal accounts (no consumer API) |
 
-**Conclusión**: arrancar con Google Tasks + Linear + TickTick. Google Keep queda fuera salvo scraping no oficial (frágil, no recomendado).
+**Conclusion**: start with Google Tasks + Linear + TickTick. Google Keep is out unless using unofficial scraping (fragile, not recommended).
 
-### Arquitectura propuesta
-- Protocolo `TaskProvider` (fetch/add/complete/update/delete/lists) que abstrae el backend.
-- Implementaciones: `GoogleTasksProvider` (refactor del actual), `LinearProvider`, `TickTickProvider`.
-- Modelo `Profile { name, provider, credentials }` — credenciales por perfil en el almacenamiento seguro.
-- Selector de perfil en el header (junto al selector de vista).
-- Onboarding por proveedor con su flow de OAuth y guía de cómo conseguir credenciales.
+### Proposed architecture
+- `TaskProvider` protocol (fetch/add/complete/update/delete/lists) that abstracts the backend.
+- Implementations: `GoogleTasksProvider` (refactor of current), `LinearProvider`, `TickTickProvider`.
+- `Profile { name, provider, credentials }` model — per-profile credentials in secure storage.
+- Profile selector in the header (next to the view selector).
+- Per-provider onboarding with OAuth flow and guide on how to get credentials.
 
-### Mapeo de conceptos
-- Google Tasks: listas → proyectos; sin prioridad; solo fecha.
-- Linear: teams/projects → "listas"; tiene estados, prioridad, assignees, labels.
-- TickTick: projects → "listas"; prioridad (0/1/3/5), tags, due con hora.
-- Normalizar a un modelo común y exponer lo específico de cada uno donde aplique.
-
----
-
-## Roadmap decidido (jun 2026)
-
-> Features confirmadas por el usuario desde [ideas.md](ideas.md). **Cada pendiente tiene un GitHub issue para tracking.**
-
-> **Prioridad actual: refinar Google Tasks a estado óptimo antes de Linear integration.**
+### Concept mapping
+- Google Tasks: lists → projects; no priority; date only.
+- Linear: teams/projects → "lists"; has states, priority, assignees, labels.
+- TickTick: projects → "lists"; priority (0/1/3/5), tags, due with time.
+- Normalize to a common model and expose provider-specific fields where applicable.
 
 ---
 
-## 🎯 Path to "Estado Óptimo" (Google Tasks)
+## Decided Roadmap (Jun 2026)
 
-Refinamientos críticos antes de empezar Linear integration:
+> Features confirmed from [ideas.md](ideas.md). **Each pending item has a GitHub issue for tracking.**
 
-### P0 — Crítico para producción
-- [ ] **Notificaciones** — reminder cuando tarea vence hoy/está overdue
-- [ ] **Error handling UX** — qué pasa sin internet, sync failures, offline mode
-- [ ] **Performance polish** — lazy loading, smooth scrolling con muchas (100+) tareas
-- [x] **Keyboard navigation refinement** — 12 conflictos resueltos en audit build 3 ✅
+> **Current priority: refine Google Tasks to optimal state before Linear integration.**
 
-### P1 — Alta prioridad
-- [ ] **Drag & drop reorder** — reordenar tareas dentro de lista (ideas.md: esfuerzo medio)
-- [ ] **URLs clickeables en notas** — detectar links y hacerlos clickeables (ideas.md: esfuerzo bajo)
-- [ ] **Mejorar input de data en descripciones** — mejor UX para editar notas largas con markdown
-- [ ] **Auto-updates (Sparkle)** — la app actualmente NO verifica updates disponibles; integrar Sparkle para distribución sin App Store
+---
+
+## 🎯 Path to "Optimal State" (Google Tasks)
+
+Critical refinements before starting Linear integration:
+
+### P0 — Critical for production
+- [ ] **Notifications** — reminder when a task is due today or overdue
+- [ ] **Error handling UX** — what happens without internet, sync failures, offline mode
+- [ ] **Performance polish** — lazy loading, smooth scrolling with many (100+) tasks
+- [x] **Keyboard navigation refinement** — 12 conflicts resolved in build 3 audit ✅
+
+### P1 — High priority
+- [ ] **Drag & drop reorder** — reorder tasks within a list (medium effort)
+- [ ] **Clickable URLs in notes** — detect links and make them clickable (low effort)
+- [ ] **Better description input** — improved UX for editing long notes with markdown
+- [ ] **Auto-updates (Sparkle)** — app currently does NOT check for updates; integrate Sparkle for non-App Store distribution
 
 ### P2 — Nice to have
-- [ ] **Widget funcional** — actualmente es placeholder; necesita App Group + cache real
-- [ ] **Vista calendario** — tareas en grilla mensual/semanal
+- [ ] **Functional widget** — currently a placeholder; needs App Group + real cache
+- [ ] **Calendar view** — tasks with dates in a monthly/weekly grid
 
 ---
 
-## 🚀 Después: Linear Integration (Work Profile)
+## 🚀 Next: Linear Integration (Work Profile)
 
-Una vez Google Tasks esté en "estado óptimo":
-1. Implementar `TaskProvider` protocol
-2. Refactor `GoogleTasksProvider` del servicio actual
-3. Agregar `LinearProvider` (GraphQL + OAuth)
+Once Google Tasks is in "optimal state":
+1. Implement `TaskProvider` protocol
+2. Refactor current service into `GoogleTasksProvider`
+3. Add `LinearProvider` (GraphQL + OAuth)
 4. Profile switching UI (Personal = Google, Work = Linear)
-5. Mapeo de conceptos (Linear issues → tareas, estados, prioridades, labels)
+5. Concept mapping (Linear issues → tasks, states, priorities, labels)
 
-**Objetivo final:** Personal (Google Tasks) + Work (Linear) en Eventually con profile switching
+**End goal:** Personal (Google Tasks) + Work (Linear) in Eventually with profile switching
 
 ---
 
-### Pendientes (con issue) — ✅ factibles con la API
-- [ ] **Agrupado por fecha** (Vencidas/Hoy/Mañana/Esta semana) — #2 — *distinto de subtareas*
-- [ ] **Vista de completadas** — #3
-- [ ] **Navegación 100% teclado + acciones ⌘K** — #4
-- [ ] **Vista calendario** — #5
-- [ ] **Widget de escritorio real** (App Group + cache) — #9
-- [ ] **Drag & drop** para reordenar tareas — #10
+### Pending (with issue) — ✅ feasible with the API
+- [ ] **Group by date** (Overdue/Today/Tomorrow/This week) — #2
+- [ ] **Completed tasks view** — #3
+- [ ] **Full keyboard navigation + ⌘K actions** — #4
+- [ ] **Calendar view** — #5
+- [ ] **Real desktop widget** (App Group + cache) — #9
+- [ ] **Drag & drop** task reorder — #10
 - [ ] **Quick-capture (clipboard/snippets/aliases)** — #13
 
-### Pendientes con ⚠️ limitación de API (decisión de diseño)
-- [ ] **Recordatorios/notificaciones** — #6 — fecha sincroniza, hora sería local
-- [ ] **Recurrencia** — #7 — la API no la expone; habría que gestionarla local
+### Pending with ⚠️ API limitation (design decision)
+- [ ] **Reminders/notifications** — #6 — date syncs, time would be local only
+- [ ] **Recurrence** — #7 — API doesn't expose it; would need local management
 
-### Refinamiento pendiente (de la auditoría visual/UX)
-- [ ] Click-outside monitor: verificar que no cierre la ventana al usar popovers/menús
-- [ ] Empty state diferenciado (sin sesión / offline / sin listas / sin tareas)
-- [ ] Navegación por teclado para completar/editar tareas
-- [ ] Limpiar `error` al tener éxito; visibilidad de errores en auto-refresh de fondo
+### Pending refinements (from visual/UX audit)
+- [ ] Click-outside monitor: verify window doesn't close when using popovers/menus
+- [ ] Differentiated empty states (no session / offline / no lists / no tasks)
+- [ ] Clean up `error` on success; error visibility in background auto-refresh
 
-### Hechas
-- [x] **Single UI**: Popover retirado; todo en el Command Window (login incluido); ícono de menu bar opcional
-- [x] **Audit pass A**: routing de `#lista`, borrar lista activa, rename guard, sortOrder persiste, color de fecha unificado, doble-fetch removido
-- [x] **Auto-refresh optimizado** (Settings → Sync) — #8 ✅
-- [x] **Crear / renombrar / borrar / mover (local) listas** — #11 ✅
-- [x] **Markdown en notas** + descripción opcional en el input — #12 ✅
-- [x] Badge con contador, Launch at login (real), sort en smart views, fix timezone (UTC)
-- [x] Marcador `!fecha` (ES/EN, 18 tests), `#lista` + fechas naturales, subtareas
-- [x] Search, appearance (light/dark/system), draft retention (Raycast), retorno de foco
-- [x] Resize/posición persistente, agrupar por lista, selector de lista en el input
+### Done
+- [x] **Single UI**: Popover removed; everything in the Command Window (login included); menu bar icon optional
+- [x] **Audit pass A**: `#list` routing, delete active list, rename guard, sortOrder persists, unified date color, double-fetch removed
+- [x] **Optimized auto-refresh** (Settings → Sync) — #8 ✅
+- [x] **Create / rename / delete / move lists** — #11 ✅
+- [x] **Markdown in notes** + optional description in input — #12 ✅
+- [x] Badge counter, Launch at login (real), sort in smart views, timezone fix (UTC)
+- [x] `!date` marker (ES/EN, 18 tests), `#list` + natural dates, subtasks
+- [x] Search, appearance (light/dark/system), draft retention, focus return
+- [x] Persistent resize/position, group by list, list selector in input
+- [x] **Comprehensive UX audit** — 12 keyboard/focus/state conflicts resolved (build 3)
 
-### ⚠️ Con limitación de la API de Google Tasks (importante)
-- [ ] **Recordatorios / notificaciones**: la fecha sí sincroniza; **la hora NO** (la API solo guarda fecha). Una notificación con hora sería **local en la app**, no sincronizada con Google ni con el celular.
-- [ ] **Recurrencia**: ⚠️ **La API de Google Tasks NO expone recurrencia.** Una tarea recurrente creada en el celular (app de Google) **no se puede leer ni editar** vía API — Eventually la vería como una tarea suelta. Para tener recurrencia real y bidireccional habría que **gestionarla localmente en Eventually** (generar las instancias nosotros), lo cual no se reflejaría en la app oficial de Google. Decisión de diseño pendiente.
+### ⚠️ Google Tasks API limitations (important)
+- [ ] **Reminders / notifications**: date syncs fine; **time does NOT** (API stores date only). A time-based notification would be **local to the app**, not synced with Google or mobile.
+- [ ] **Recurrence**: ⚠️ **The Google Tasks API does NOT expose recurrence.** A recurring task created on mobile (Google app) **cannot be read or edited** via API — Eventually sees it as a standalone task. True bidirectional recurrence would require **managing it locally in Eventually** (generating instances ourselves), which wouldn't reflect in the official Google app. Design decision pending.
 
-### Otras
-- [ ] **Multi-profile + multi-provider** (Google Tasks + Linear + TickTick) — ver sección arriba e issue #1
-- [ ] **Clipboard → task**, **snippets/templates**, **aliases de lista** (quick-capture estilo Raycast)
+### Other
+- [ ] **Multi-profile + multi-provider** (Google Tasks + Linear + TickTick) — see section above and issue #1
+- [ ] **Clipboard → task**, **snippets/templates**, **list aliases** (Raycast-style quick-capture)
