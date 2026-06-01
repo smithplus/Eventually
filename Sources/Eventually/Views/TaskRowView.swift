@@ -50,8 +50,8 @@ struct TaskRowView: View {
                 subtaskInputRow
             }
         }
-        .padding(.horizontal, Theme.spaceM + 2)
-        .padding(.vertical, isChild ? 8 : 10)
+        .padding(.horizontal, Theme.spaceM)
+        .padding(.vertical, isChild ? 5 : 7)
         // #7 — defined surface on hover instead of opacity hack
         .background(
             RoundedRectangle(cornerRadius: 6, style: .continuous)
@@ -195,9 +195,9 @@ struct TaskRowView: View {
 
     private var collapsedContent: some View {
         VStack(alignment: .leading, spacing: 5) {
-            // #3 — tight letter-spacing like Linear body text
+            // Raycast-sibling: regular weight, 13px, tight tracking
             Text(task.title.isEmpty ? "Untitled" : task.title)
-                .font(.system(size: 13.5, weight: .medium))
+                .font(.system(size: 13, weight: .regular))
                 .tracking(-0.2)
                 .strikethrough(task.isCompleted)
                 .foregroundStyle(task.isCompleted ? .secondary : .primary)

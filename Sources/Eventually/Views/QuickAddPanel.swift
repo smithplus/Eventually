@@ -12,12 +12,12 @@ struct CommandRoot: View {
                 QuickAddPanel(onClose: onClose)
             } else {
                 LoginView()
-                    .frame(minWidth: 540, maxWidth: .infinity, minHeight: 420, maxHeight: .infinity)
-                    .background(.regularMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: Theme.radiusL, style: .continuous))
+                    .frame(minWidth: 520, maxWidth: .infinity, minHeight: 400, maxHeight: .infinity)
+                    .background(.ultraThickMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .overlay(
-                        RoundedRectangle(cornerRadius: Theme.radiusL, style: .continuous)
-                            .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5)
                     )
                     .onExitCommand { onClose() }
             }
@@ -254,7 +254,7 @@ struct QuickAddPanel: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header: quick-add input
-            VStack(alignment: .leading, spacing: Theme.spaceS) {
+            VStack(alignment: .leading, spacing: 6) {
                 nameField
                 if showListSuggestions {
                     listSuggestionsDropdown
@@ -268,7 +268,9 @@ struct QuickAddPanel: View {
                     errorBanner(error)
                 }
             }
-            .padding(Theme.spaceL)
+            .padding(.horizontal, Theme.spaceL)
+            .padding(.top, 18)
+            .padding(.bottom, 12)
 
             // #6 — subtle structural separators (0.5px, very low opacity)
             Color.primary.opacity(0.07).frame(height: 0.5)
@@ -280,12 +282,13 @@ struct QuickAddPanel: View {
                 bulkActionBar
             }
         }
-        .frame(minWidth: 540, maxWidth: .infinity, minHeight: 420, maxHeight: .infinity)
-        .background(.regularMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: Theme.radiusL, style: .continuous))
+        .frame(minWidth: 520, maxWidth: .infinity, minHeight: 400, maxHeight: .infinity)
+        .background(.ultraThickMaterial)  // darker, more opaque — closer to Raycast
+        .background(Color(nsColor: .windowBackgroundColor).opacity(0.3))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: Theme.radiusL, style: .continuous)
-                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5)
         )
         .onAppear {
             nameFocused = true
@@ -373,7 +376,8 @@ struct QuickAddPanel: View {
         TextField("Description (optional · markdown)", text: $draft.notes, axis: .vertical)
             .textFieldStyle(.plain)
             .font(.system(size: 13))
-            .foregroundStyle(.secondary)
+            .tracking(-0.1)
+            .foregroundStyle(.tertiary)
             .lineLimit(1...8)
             .focused($notesFocused)
             .modifier(DescriptionKeyHandler(
@@ -394,15 +398,15 @@ struct QuickAddPanel: View {
                 quickDateChip("Tomorrow", date: Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: Date())))
                 Button { showDatePicker.toggle() } label: {
                     HStack(spacing: 4) {
-                        Image(systemName: "calendar").font(.system(size: 11))
-                        Text("Pick date").font(.system(size: 12, weight: .medium))
+                        Image(systemName: "calendar").font(.system(size: 10))
+                        Text("Pick date").font(.system(size: 12, weight: .regular)).tracking(-0.1)
                     }
                     .foregroundStyle(.secondary)
-                    .padding(.horizontal, Theme.spaceM)
-                    .padding(.vertical, 5)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Color.primary.opacity(0.06)))
                 }
                 .buttonStyle(.plain)
-                .background(Capsule().strokeBorder(Color.primary.opacity(0.15), lineWidth: 1))
                 .popover(isPresented: $showDatePicker, arrowEdge: .bottom) { datePickerPopover }
                 .fixedSize()
             }
@@ -538,7 +542,7 @@ struct QuickAddPanel: View {
                 controlsCluster
                     .padding(.trailing, Theme.spaceM)
             }
-            .padding(.vertical, Theme.spaceS)
+            .padding(.vertical, 5)
         }
     }
 
@@ -574,17 +578,21 @@ struct QuickAddPanel: View {
         searchText = ""
     }
 
+    // Raycast-style filter tabs: compact, unselected = muted text only, selected = white text + subtle pill
     private func filterTab(_ title: String, icon: String?, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 4) {
-                if let icon { Image(systemName: icon).font(.system(size: 10)) }
-                Text(title)
+            HStack(spacing: 3) {
+                if let icon { Image(systemName: icon).font(.system(size: 9)) }
+                Text(title).tracking(-0.1)
             }
-            .font(.system(size: 12, weight: isSelected ? .semibold : .regular))
-            .foregroundStyle(isSelected ? Theme.accent : .secondary)
-            .padding(.horizontal, Theme.spaceM)
-            .padding(.vertical, 5)
-            .background(Capsule().fill(isSelected ? Theme.accentSoft : Color.clear))
+            .font(.system(size: 12, weight: isSelected ? .medium : .regular))
+            .foregroundStyle(isSelected ? .primary : .tertiary)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(isSelected ? Color.primary.opacity(0.12) : Color.clear)
+            )
         }
         .buttonStyle(.plain)
     }
@@ -825,10 +833,7 @@ struct QuickAddPanel: View {
                            showListBadge: showListBadge, showDateBadge: showDateBadge,
                            expandedTaskID: $expandedTaskID)
             }
-            // #5 — near-invisible divider (0.5px, very low opacity) — structural, not decorative
-            Color.primary.opacity(0.05)
-                .frame(height: 0.5)
-                .padding(.leading, ordered.isChild ? 64 : 40)
+            // No divider — Raycast-style: rows breathe through padding alone
         }
         .background(isSelected ? Theme.accent.opacity(0.08) : Color.clear)
         .animation(.easeInOut(duration: 0.2), value: isSelected)
@@ -936,7 +941,8 @@ struct QuickAddPanel: View {
     private var nameField: some View {
         TextField("", text: $draft.name, prompt: Text("Task name  ·  #list  ·  !tomorrow"))
             .textFieldStyle(.plain)
-            .font(.system(size: 22, weight: .medium))
+            .font(.system(size: 18, weight: .regular))
+            .tracking(-0.2)
             .focused($nameFocused)
             .modifier(CommandKeyHandler(
                 suggestionsVisible: anySuggestionsVisible,
@@ -1213,25 +1219,25 @@ struct QuickAddPanel: View {
         if !draft.name.isEmpty && !draft.name.hasSuffix(" ") { draft.name += " " }
     }
 
+    // Raycast-style: no border, just subtle fill on selected
     private func quickDateChip(_ label: String, date: Date?) -> some View {
         let isSelected = draft.dueDate != nil && date != nil && Calendar.current.isDate(draft.dueDate!, inSameDayAs: date!)
         return Button {
             draft.dueDate = date
         } label: {
             Text(label)
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: 12, weight: .regular))
+                .tracking(-0.1)
                 .lineLimit(1)
                 .fixedSize()
-                .padding(.horizontal, Theme.spaceM)
-                .padding(.vertical, 5)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
         }
         .buttonStyle(.plain)
         .foregroundStyle(isSelected ? Theme.dateChip : .secondary)
         .background(
-            Capsule().fill(isSelected ? Theme.dateChipSoft : Color.clear)
-        )
-        .overlay(
-            Capsule().strokeBorder(Color.primary.opacity(isSelected ? 0 : 0.15), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(isSelected ? Theme.dateChipSoft : Color.primary.opacity(0.06))
         )
         .fixedSize()
     }
