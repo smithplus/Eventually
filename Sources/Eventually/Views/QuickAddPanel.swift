@@ -277,7 +277,12 @@ struct QuickAddPanel: View {
         .onChange(of: searchText) { _ in resetNavigation() }
         .onChange(of: showSearch) { _ in resetNavigation() }
         .onChange(of: nameFocused) { focused in if focused { listFocused = false } }
-        .onExitCommand { handleEscape() }
+        // Keep the cursor valid when the visible set shrinks (e.g. after a
+        // complete/delete) so navigation never points past the end.
+        .onChange(of: visibleRows.count) { count in
+            cursorIndex = max(0, min(cursorIndex, count - 1))
+        }
+        .onExitCommand { if !listFocused { handleEscape() } }
         .task { await tasksService.fetchTaskLists() }
         .alert("Rename list", isPresented: Binding(
             get: { renamingList != nil },
@@ -857,7 +862,7 @@ struct QuickAddPanel: View {
             Menu {
                 Button("Today") { runOnTargets { await tasksService.setDueDate($0, to: Calendar.current.startOfDay(for: Date())) } }
                 Button("Tomorrow") { runOnTargets { await tasksService.setDueDate($0, to: Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: Date()))) } }
-                Button("Pick date…") { showBulkDatePicker = true }
+                Button("Pick date…") { bulkDate = Date(); showBulkDatePicker = true }
                 Divider()
                 Button("Clear date") { runOnTargets { await tasksService.setDueDate($0, to: nil) } }
             } label: { Label("Date", systemImage: "calendar") }
