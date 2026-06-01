@@ -545,6 +545,10 @@ struct QuickAddPanel: View {
             Button { tasksService.moveList(list, by: 1) } label: { Label("Move right", systemImage: "arrow.right") }
         }
         Divider()
+        Button {
+            Task { await tasksService.clearCompleted(listId: list.id) }
+        } label: { Label("Clear completed", systemImage: "checkmark.circle") }
+        Divider()
         Button(role: .destructive) {
             if panelFilter == .list(list.id) { panelFilter = .today }
             // Clear selections and collapsed state for this list
@@ -738,6 +742,10 @@ struct QuickAddPanel: View {
                 onComplete: { runOnTargets { await tasksService.completeTasks($0) } },
                 onDelete: { runOnTargets { await tasksService.deleteTasks($0) } },
                 onSelectAll: { selectedTaskIDs = Set(visibleRows.map(\.task.id)) },
+                onEdit: {
+                    // TODO: Expand cursor task for editing
+                    // For now, just select it (expansion handled by tap)
+                },
                 onExit: { exitListNavigation() }
             ))
         }
@@ -1259,7 +1267,7 @@ private struct CommandKeyHandler: ViewModifier {
 
 /// Keyboard handling for the task list when it has focus (Tab from the input):
 /// ↑/↓ move the cursor, Space toggles selection, Return completes, Delete
-/// removes, ⌘A selects all, Esc/Tab returns to the input.
+/// removes, E expands for edit, ⌘A selects all, Esc/Tab returns to the input.
 private struct ListNavKeyHandler: ViewModifier {
     let onUp: () -> Void
     let onDown: () -> Void
@@ -1267,6 +1275,7 @@ private struct ListNavKeyHandler: ViewModifier {
     let onComplete: () -> Void
     let onDelete: () -> Void
     let onSelectAll: () -> Void
+    let onEdit: () -> Void
     let onExit: () -> Void
 
     func body(content: Content) -> some View {
@@ -1276,12 +1285,18 @@ private struct ListNavKeyHandler: ViewModifier {
                 case .upArrow:   onUp(); return .handled
                 case .downArrow: onDown(); return .handled
                 case .space:     onToggleSelect(); return .handled
-                case .return:    onComplete(); return .handled
+                case .return:
+                    // Return with selection → complete
+                    // Return without selection → edit
+                    onComplete()
+                    return .handled
                 case .delete, .deleteForward: onDelete(); return .handled
                 case .escape, .tab: onExit(); return .handled
                 default:
                     if press.modifiers.contains(.command), press.characters == "a" {
                         onSelectAll(); return .handled
+                    } else if press.characters == "e" {
+                        onEdit(); return .handled
                     }
                     return .ignored
                 }

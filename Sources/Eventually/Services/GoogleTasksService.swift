@@ -12,6 +12,9 @@ class GoogleTasksService: ObservableObject {
 
     private let baseURL = "https://tasks.googleapis.com/tasks/v1"
 
+    /// Track in-flight mutations to prevent duplicate requests
+    private var mutatingTaskIDs: Set<String> = []
+
     // MARK: - Task Lists
 
     func fetchTaskLists() async {
@@ -294,6 +297,11 @@ class GoogleTasksService: ObservableObject {
         guard let listId = task.listId,
               let token = await authService?.validAccessToken() else { return }
 
+        // Guard: skip if already mutating this task
+        guard !mutatingTaskIDs.contains(task.id) else { return }
+        mutatingTaskIDs.insert(task.id)
+        defer { mutatingTaskIDs.remove(task.id) }
+
         let body: [String: Any] = ["status": "completed"]
 
         do {
@@ -313,6 +321,11 @@ class GoogleTasksService: ObservableObject {
         guard let listId = task.listId,
               let token = await authService?.validAccessToken() else { return }
 
+        // Guard: skip if already mutating
+        guard !mutatingTaskIDs.contains(task.id) else { return }
+        mutatingTaskIDs.insert(task.id)
+        defer { mutatingTaskIDs.remove(task.id) }
+
         let body: [String: Any] = ["status": "needsAction"]
 
         do {
@@ -330,6 +343,11 @@ class GoogleTasksService: ObservableObject {
     func deleteTask(_ task: GTask) async {
         guard let listId = task.listId,
               let token = await authService?.validAccessToken() else { return }
+
+        // Guard: skip if already mutating
+        guard !mutatingTaskIDs.contains(task.id) else { return }
+        mutatingTaskIDs.insert(task.id)
+        defer { mutatingTaskIDs.remove(task.id) }
 
         do {
             try await delete("/lists/\(listId)/tasks/\(task.id)", token: token)
@@ -424,6 +442,12 @@ class GoogleTasksService: ObservableObject {
 
     func deleteTasks(_ items: [GTask]) async {
         for task in items { await deleteTask(task) }
+    }
+
+    /// Clear all completed tasks from a list
+    func clearCompleted(listId: String) async {
+        let completed = tasks[listId]?.filter { $0.isCompleted } ?? []
+        for task in completed { await deleteTask(task) }
     }
 
     func setDueDate(_ items: [GTask], to date: Date?) async {

@@ -7,14 +7,18 @@ import SwiftUI
 /// (e.g. on click-outside) and is restored on reopen — Raycast-style.
 @MainActor
 final class QuickAddDraft: ObservableObject {
-    @Published var name = ""
-    @Published var notes = ""
-    @Published var dueDate: Date?
-    @Published var listId: String?
+    @Published var name = "" { didSet { saveDraft() } }
+    @Published var notes = "" { didSet { saveDraft() } }
+    @Published var dueDate: Date? { didSet { saveDraft() } }
+    @Published var listId: String? { didSet { saveDraft() } }
 
     var isEmpty: Bool {
         name.trimmingCharacters(in: .whitespaces).isEmpty
             && notes.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
+    init() {
+        loadDraft()
     }
 
     func clear() {
@@ -22,6 +26,32 @@ final class QuickAddDraft: ObservableObject {
         notes = ""
         dueDate = nil
         listId = nil
+        // Clear persisted draft
+        let d = UserDefaults.standard
+        d.removeObject(forKey: "draft.name")
+        d.removeObject(forKey: "draft.notes")
+        d.removeObject(forKey: "draft.dueDate")
+        d.removeObject(forKey: "draft.listId")
+    }
+
+    private func saveDraft() {
+        let d = UserDefaults.standard
+        d.set(name, forKey: "draft.name")
+        d.set(notes, forKey: "draft.notes")
+        if let date = dueDate {
+            d.set(date, forKey: "draft.dueDate")
+        } else {
+            d.removeObject(forKey: "draft.dueDate")
+        }
+        d.set(listId, forKey: "draft.listId")
+    }
+
+    private func loadDraft() {
+        let d = UserDefaults.standard
+        name = d.string(forKey: "draft.name") ?? ""
+        notes = d.string(forKey: "draft.notes") ?? ""
+        dueDate = d.object(forKey: "draft.dueDate") as? Date
+        listId = d.string(forKey: "draft.listId")
     }
 }
 
