@@ -154,7 +154,11 @@ struct TaskRowView: View {
     private var checkboxButton: some View {
         Button {
             Task {
-                await tasksService.completeTask(task)
+                if task.isCompleted {
+                    await tasksService.uncompleteTask(task)
+                } else {
+                    await tasksService.completeTask(task)
+                }
             }
         } label: {
             Image(systemName: task.isCompleted ? "checkmark.circle.fill" : "circle")

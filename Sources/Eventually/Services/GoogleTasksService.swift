@@ -128,7 +128,7 @@ class GoogleTasksService: ObservableObject {
             let allForDetection = activeItems + completedItems
             let patternsDetected = detectRecurringPatterns(in: allForDetection)
 
-            // Apply detected patterns back to active tasks only
+            // Apply detected patterns back to active tasks
             activeItems = activeItems.map { active in
                 if let match = patternsDetected.first(where: {
                     $0.title.lowercased().trimmingCharacters(in: .whitespaces) ==
@@ -143,7 +143,23 @@ class GoogleTasksService: ObservableObject {
                 return active
             }
 
-            tasks[listId] = activeItems
+            // Also apply patterns to completed tasks (for display in Completed section)
+            var completedWithPatterns = completedItems.map { completed in
+                if let match = patternsDetected.first(where: {
+                    $0.title.lowercased().trimmingCharacters(in: .whitespaces) ==
+                    completed.title.lowercased().trimmingCharacters(in: .whitespaces) &&
+                    $0.isRecurring
+                }) {
+                    var updated = completed
+                    updated.isRecurring = true
+                    updated.recurrencePattern = match.recurrencePattern
+                    return updated
+                }
+                return completed
+            }
+
+            // Store BOTH active and completed (UI will filter as needed)
+            tasks[listId] = activeItems + completedWithPatterns
         } catch {
             self.error = error.localizedDescription
         }
@@ -282,10 +298,31 @@ class GoogleTasksService: ObservableObject {
 
         do {
             _ = try await patch("/lists/\(listId)/tasks/\(task.id)", body: body, token: token)
-            tasks[listId]?.removeAll { $0.id == task.id }
+            // Update local state: mark as completed instead of removing
+            if let idx = tasks[listId]?.firstIndex(where: { $0.id == task.id }) {
+                tasks[listId]?[idx].status = .completed
+            }
         } catch {
             self.error = error.localizedDescription
             // Reconcile: server might have succeeded but response failed
+            await reconcile(listId)
+        }
+    }
+
+    func uncompleteTask(_ task: GTask) async {
+        guard let listId = task.listId,
+              let token = await authService?.validAccessToken() else { return }
+
+        let body: [String: Any] = ["status": "needsAction"]
+
+        do {
+            _ = try await patch("/lists/\(listId)/tasks/\(task.id)", body: body, token: token)
+            // Update local state: mark as active
+            if let idx = tasks[listId]?.firstIndex(where: { $0.id == task.id }) {
+                tasks[listId]?[idx].status = .needsAction
+            }
+        } catch {
+            self.error = error.localizedDescription
             await reconcile(listId)
         }
     }
