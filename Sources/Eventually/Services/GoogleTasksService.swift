@@ -163,6 +163,9 @@ class GoogleTasksService: ObservableObject {
 
             // Store BOTH active and completed (UI will filter as needed)
             tasks[listId] = activeItems + completedWithPatterns
+            // Clear error only after a fully successful fetch for this list
+            // (not per-HTTP-response to avoid one list's success hiding another's failure)
+            error = nil
         } catch {
             self.error = error.localizedDescription
         }
@@ -654,14 +657,26 @@ class GoogleTasksService: ObservableObject {
 
     // MARK: - HTTP Helpers
 
+    /// Builds a URL from baseURL + path, percent-encoding the path if needed.
+    /// Avoids force-unwrap crash when Google returns IDs with unusual characters.
+    private func makeURL(_ path: String) throws -> URL {
+        let raw = baseURL + path
+        // Fast path: valid as-is (most cases)
+        if let url = URL(string: raw) { return url }
+        // Slow path: percent-encode non-ASCII / special characters in the path component
+        if let encoded = raw.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+           let url = URL(string: encoded) { return url }
+        throw APIError.badURL(raw)
+    }
+
     private func get(_ path: String, token: String) async throws -> Data {
-        var request = URLRequest(url: URL(string: baseURL + path)!)
+        var request = URLRequest(url: try makeURL(path))
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         return try await send(request)
     }
 
     private func post(_ path: String, body: [String: Any], token: String) async throws -> Data {
-        var request = URLRequest(url: URL(string: baseURL + path)!)
+        var request = URLRequest(url: try makeURL(path))
         request.httpMethod = "POST"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -670,7 +685,7 @@ class GoogleTasksService: ObservableObject {
     }
 
     private func patch(_ path: String, body: [String: Any], token: String) async throws -> Data {
-        var request = URLRequest(url: URL(string: baseURL + path)!)
+        var request = URLRequest(url: try makeURL(path))
         request.httpMethod = "PATCH"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -680,24 +695,21 @@ class GoogleTasksService: ObservableObject {
 
     @discardableResult
     private func delete(_ path: String, token: String) async throws -> Data {
-        var request = URLRequest(url: URL(string: baseURL + path)!)
+        var request = URLRequest(url: try makeURL(path))
         request.httpMethod = "DELETE"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         return try await send(request)
     }
 
-    /// Performs the request and throws a readable error on non-2xx responses,
-    /// extracting Google's API error message when present. A request that
-    /// reaches a 2xx clears any stale error banner; failures re-set it via the
-    /// caller's catch.
+    /// Performs the request and throws a readable error on non-2xx responses.
+    /// Does NOT clear `error` on success — callers that want to clear it should
+    /// do so explicitly to avoid one list's success hiding another list's failure.
     private func send(_ request: URLRequest) async throws -> Data {
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse else { return data }
-
         if !(200...299).contains(http.statusCode) {
             throw APIError.from(statusCode: http.statusCode, data: data)
         }
-        error = nil
         return data
     }
 
@@ -800,10 +812,12 @@ class GoogleTasksService: ObservableObject {
 
 enum APIError: LocalizedError {
     case message(String)
+    case badURL(String)
 
     var errorDescription: String? {
         switch self {
         case .message(let m): return m
+        case .badURL(let url): return "Invalid URL: \(url)"
         }
     }
 

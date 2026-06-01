@@ -86,6 +86,11 @@ struct LinkedTextView: NSViewRepresentable {
     var textColor: NSColor = .tertiaryLabelColor
     var lineLimit: Int = 1
 
+    // NSDataDetector is expensive to construct — cache it as a static
+    private static let linkDetector = try? NSDataDetector(
+        types: NSTextCheckingResult.CheckingType.link.rawValue
+    )
+
     func makeNSView(context: Context) -> NSTextField {
         let field = NSTextField(wrappingLabelWithString: "")
         field.isEditable = false
@@ -101,15 +106,13 @@ struct LinkedTextView: NSViewRepresentable {
         let attributed = NSMutableAttributedString(string: text)
         let range = NSRange(text.startIndex..., in: text)
 
-        // Base style
         attributed.addAttributes([
             .font: font,
             .foregroundColor: textColor
         ], range: range)
 
-        // Detect and link URLs
-        let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
-        detector?.enumerateMatches(in: text, range: range) { match, _, _ in
+        // Use cached detector — not recreated on every render pass
+        Self.linkDetector?.enumerateMatches(in: text, range: range) { match, _, _ in
             guard let match, let url = match.url else { return }
             attributed.addAttributes([
                 .link: url,

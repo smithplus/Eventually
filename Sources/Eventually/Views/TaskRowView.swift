@@ -308,10 +308,7 @@ struct TaskRowView: View {
 
                 Spacer()
 
-                Button("Done") { saveDetail() }
-                    .buttonStyle(CapsuleButton())
-                    // ⌘Return only active when this row is expanded (parent disables its own ⌘Return meanwhile)
-                    .keyboardShortcut(isExpanded ? .return : KeyEquivalent("\0"), modifiers: .command)
+                doneButton
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -394,6 +391,18 @@ struct TaskRowView: View {
     private func cancelSubtask() {
         showSubtaskInput = false
         subtaskTitle = ""
+    }
+
+    /// Done button — only registers ⌘Return when this row is expanded.
+    /// Uses a conditional @ViewBuilder instead of KeyEquivalent("\0") (undefined behavior).
+    @ViewBuilder
+    private var doneButton: some View {
+        let btn = Button("Done") { saveDetail() }.buttonStyle(CapsuleButton())
+        if isExpanded {
+            btn.keyboardShortcut(.return, modifiers: .command)
+        } else {
+            btn
+        }
     }
 
     // MARK: - Markdown format helpers

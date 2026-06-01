@@ -3,6 +3,8 @@ import Sparkle
 
 /// Manages automatic app updates via Sparkle.
 /// The appcast URL points to the GitHub releases feed for this repo.
+/// @MainActor ensures all @Published mutations and Sparkle callbacks stay on the main thread.
+@MainActor
 final class UpdateService: NSObject, ObservableObject, SPUUpdaterDelegate {
 
     static let shared = UpdateService()

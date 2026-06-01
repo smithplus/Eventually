@@ -54,10 +54,18 @@ struct GTask: Identifiable, Codable, Hashable {
     /// Google stores `due` as a date anchored to UTC midnight. This returns the
     /// LOCAL midnight Date for that same calendar day, so comparisons against
     /// the user's local "today" land in the right day bucket.
+    /// DST fix: if the local calendar can't produce midnight for this day
+    /// (spring-forward gap), advance one hour to land past the gap.
     var dueDay: Date? {
         guard let due else { return nil }
         let comps = GTask.utcCalendar.dateComponents([.year, .month, .day], from: due)
-        return Calendar.current.date(from: comps)
+        if let d = Calendar.current.date(from: comps) { return d }
+        // DST gap: try 01:00 on the same day, then normalize back to start of day
+        var fallback = comps
+        fallback.hour = 1
+        return Calendar.current.date(from: fallback).map {
+            Calendar.current.startOfDay(for: $0)
+        }
     }
 
     static let utcCalendar: Calendar = {
@@ -129,12 +137,19 @@ struct GTask: Identifiable, Codable, Hashable {
 
     /// Google Tasks returns RFC-3339 with fractional seconds ("...T00:00:00.000Z").
     /// The default ISO8601DateFormatter rejects fractional seconds, so try both.
+    /// Formatters are cached as statics — ISO8601DateFormatter() is expensive to construct.
     static func parseDate(_ string: String) -> Date? {
-        let withFraction = ISO8601DateFormatter()
-        withFraction.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let d = withFraction.date(from: string) { return d }
-        return ISO8601DateFormatter().date(from: string)
+        if let d = isoWithFraction.date(from: string) { return d }
+        return isoPlain.date(from: string)
     }
+
+    private static let isoWithFraction: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+
+    private static let isoPlain = ISO8601DateFormatter()
 }
 
 struct TaskListResponse: Codable {
