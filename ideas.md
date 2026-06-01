@@ -20,14 +20,14 @@ Leyenda de viabilidad:
 | **Aliases de listas** | Escribir `#w` → resuelve a "Work" (alias cortos configurables) | ⚠️ (local) | Bajo |
 | **Quicklink "abrir en Google Tasks"** | Acción por tarea para abrirla en tasks.google.com | ✅ | Bajo |
 | **Acciones rápidas con ⌘K** | Menú de acciones contextual sobre la tarea seleccionada (estilo Raycast) | ✅ | Medio |
-| **Navegación 100% teclado** | Flechas para moverse por la lista, Enter para completar/expandir, sin mouse | ✅ | Medio |
+| **Navegación 100% teclado** | Flechas para moverse por la lista, Enter para completar/expandir, sin mouse | ✅ Hecho (parcial) | — |
 | **Hyperkey / atajo configurable** | Ya tenés shortcut global configurable | ✅ Hecho | — |
 
 ## De TickTick (gestión)
 
 | Idea | Qué es | Viabilidad | Esfuerzo |
 |---|---|---|---|
-| **Agrupado por fecha** | Secciones Vencidas / Hoy / Mañana / Esta semana | ✅ | Medio |
+| **Agrupado por fecha** | Secciones Vencidas / Hoy / Mañana / Esta semana | ✅ Hecho | — |
 | **Vista de completadas** | Toggle para ver/ocultar las tareas hechas | ✅ | Bajo |
 | **Pomodoro timer** | Timer de foco 25/5 sobre una tarea, con stats | ⚠️ (local) | Medio |
 | **Habit tracking** | Hábitos diarios con racha (separado de las tareas) | ⚠️ (local) | Alto |
@@ -42,29 +42,29 @@ Leyenda de viabilidad:
 
 | Idea | Qué es | Viabilidad | Esfuerzo |
 |---|---|---|---|
-| **Badge con contador** | Número de tareas de hoy en el ícono del menu bar | ✅ | Bajo |
-| **Launch at login** | Ya está el toggle, falta cablear `SMAppService` | ✅ | Bajo |
-| **Auto-refresh** | Refrescar cada X min y al abrir | ✅ | Bajo |
+| **Badge con contador** | Número de tareas de hoy en el ícono del menu bar | ✅ Hecho | — |
+| **Launch at login** | Ya está el toggle, falta cablear `SMAppService` | ✅ Hecho | — |
+| **Auto-refresh** | Refrescar cada X min y al abrir | ✅ Hecho | — |
 | **Widget de escritorio real** | Cablear el App Group + escribir cache (hoy muestra placeholder) | ✅ | Medio |
 | **Drag & drop reordenar** | Reordenar tareas dentro de una lista | ✅ | Medio |
-| **Crear/renombrar/borrar listas** | Gestión de listas desde la app | ✅ | Medio |
+| **Crear/renombrar/borrar listas** | Gestión de listas desde la app | ✅ Hecho | — |
 | **Detección de URLs en notas** | Links clickeables en la descripción | ✅ | Bajo |
-| **Markdown en notas** | Render básico de la descripción | ✅ | Medio |
+| **Markdown en notas** | Render básico de la descripción | ✅ Hecho | — |
 
 ## Input / parsing (convención)
 
 | Idea | Qué es | Viabilidad | Esfuerzo |
 |---|---|---|---|
-| **Marcador explícito de fecha** | `!mañana` o `!viernes` (alternativa al lenguaje natural; evitar `@` por emails) | ✅ | Bajo |
+| **Marcador explícito de fecha** | `!mañana` o `!viernes` (alternativa al lenguaje natural; evitar `@` por emails) | ✅ Hecho | — |
 | **Multi-cuenta con prefijo seguro** | `>>Work` para rutear a una cuenta/proveedor (ver issue #1) | ✅ | Alto |
 | **Más idiomas de fechas** | Ampliar el parser (fechas relativas tipo "en 3 días", "próximo mes") | ✅ | Bajo |
 
 ---
 
 ## Mi top 5 (relación valor / esfuerzo), para tu consideración
-1. **Agrupado por fecha** — el mayor salto visual vs TickTick
-2. **Badge con contador** + **notificaciones de vencimiento** — utilidad de menu bar
-3. **Navegación por teclado + acciones ⌘K** — el alma de Raycast
+1. ~~**Agrupado por fecha**~~ ✅ Hecho
+2. ~~**Badge con contador**~~ ✅ Hecho + **notificaciones de vencimiento** pendiente
+3. ~~**Navegación por teclado**~~ ✅ Hecho + **acciones ⌘K** pendiente
 4. **Clipboard → task** + **snippets** — captura ultrarrápida
 5. **Wire del widget real** — ya está el 80%, falta el App Group
 

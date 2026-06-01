@@ -8,14 +8,15 @@
 
 ## Features
 
-- Icono en el menu bar con popover de tareas
-- Shortcuts globales customizables
-  - `⌘ Shift T` — abrir / cerrar
-  - `⌘ Shift O` — abrir con foco en agregar tarea
-- Soporte de múltiples listas de Google Tasks
-- Agregar, completar, editar y eliminar tareas
+- **Command Window flotante** — quick-capture estilo Raycast con `⌘⇧O`
+- **Smart views**: Today, Upcoming, All Tasks + listas personalizadas
+- **Natural language input**: `#lista` y `!fecha` (`!mañana`, `!4dias`, etc.)
+- **Keyboard-first**: navegación completa por teclado, multi-select, bulk actions
+- **Markdown rendering** en notas (headings, bullets, inline styles)
+- **Group by date / list** con headers colapsables
+- **Auto-refresh** configurable (5/15/30 min)
 - Widget de escritorio small y medium (WidgetKit)
-- Login con Google en el browser — tokens guardados en Keychain
+- Login con Google OAuth 2.0 — tokens guardados localmente
 
 ## Cómo funciona el login
 
@@ -44,32 +45,41 @@ En Xcode: seleccionar signing team → `Cmd+R`
 
 | Shortcut | Acción |
 |---|---|
-| `⌘ Shift T` | Abrir / cerrar Eventually |
-| `⌘ Shift O` | Abrir con foco en "agregar tarea" |
+| `⌘⇧O` | Abrir / cerrar Command Window |
+| `Tab` (en input) | Ir al list/date autocomplete (↑/↓ navegan, Enter acepta) |
+| `Tab` (sin autocomplete) | Foco a la lista de tareas |
+| `↑/↓` (en lista) | Navegar cursor |
+| `Espacio` | Toggle selección |
+| `Return` | Completar seleccionadas |
+| `Delete` | Borrar seleccionadas |
+| `⌘A` | Seleccionar todas visibles |
+| `Esc` / `Tab` | Volver al input |
 
-Customizables en **Preferencias → Shortcuts**.
+Customizables en **Settings**.
 
 ## Estructura del proyecto
 
 ```
 Sources/
 ├── Eventually/
-│   ├── EventuallyApp.swift           Entry point
-│   ├── AppDelegate.swift             Menu bar + shortcuts globales
-│   ├── ShortcutManager.swift         Definición de shortcuts
-│   ├── Config.swift                  Credenciales OAuth (git-ignored)
+│   ├── EventuallyApp.swift              Entry point
+│   ├── AppDelegate.swift                Menu bar + auto-refresh + badge
+│   ├── QuickAddWindowController.swift   Command Window lifecycle
+│   ├── Config.swift                     Credenciales OAuth (git-ignored)
 │   ├── Models/
-│   │   └── TaskModels.swift          Structs GTask, TaskList
+│   │   └── TaskModels.swift             GTask, TaskList, dueDay (timezone fix)
 │   ├── Services/
-│   │   ├── AuthService.swift         OAuth 2.0 PKCE + servidor local + Keychain
-│   │   └── GoogleTasksService.swift  Google Tasks API (CRUD)
+│   │   ├── AuthService.swift            OAuth 2.0 PKCE + token coalescing
+│   │   ├── GoogleTasksService.swift     Tasks API + batch ops + grouping
+│   │   └── QuickAddParser.swift         Natural-language #/! parsing (20 tests)
 │   └── Views/
-│       ├── PopoverView.swift          Login / main container
-│       ├── TasksView.swift            Lista + agregar tarea
-│       ├── TaskRowView.swift          Fila con edición inline
-│       └── SettingsView.swift         Preferencias + shortcuts
+│       ├── QuickAddPanel.swift          Main UI: input + tabs + list + bulk actions
+│       ├── TaskRowView.swift            Expandable row with markdown rendering
+│       ├── MarkdownView.swift           Block-level markdown (headings/bullets)
+│       ├── SettingsView.swift           Preferences + appearance + auto-refresh
+│       └── LoginView.swift              OAuth flow UI
 └── EventuallyWidget/
-    └── EventuallyWidget.swift         Widget WidgetKit (small + medium)
+    └── EventuallyWidget.swift            Widget WidgetKit (placeholder)
 ```
 
 ## Dependencias
