@@ -8,19 +8,20 @@
 
 ## Features
 
-- **Floating Command Window** — quick-capture Raycast-style with `⌘⇧O`
+- **Raycast-sibling UI** — compact, dark, keyboard-friendly floating window (`⌘⇧O`)
 - **Smart views**: Today, Upcoming, All Tasks + custom lists
 - **Natural language input**: `#list` and `!date` (`!tomorrow`, `!4days`, `!friday`, etc.)
-- **Keyboard-first**: full keyboard navigation, multi-select, bulk actions
-- **Markdown rendering** in notes (headings, bullets, inline styles)
-- **Group by date / list** with collapsible headers
-- **Recurring task detection** — detects patterns and shows ↻ Weekly/Monthly badge
-- **Completed tasks section** — collapsible section with smooth animations
-- **Uncomplete tasks** — click checkbox on completed tasks to undo
+- **Multi-select with ⌘-click** — bulk complete, delete, move, reschedule
+- **Markdown rendering** in notes (headings, bullets, inline styles, clickable URLs)
+- **Group by date / list** with collapsible section headers
+- **Recurring task detection** — infers Weekly/Monthly/Daily patterns, shows ↻ badge
+- **Completed tasks section** — collapsible, uncomplete on checkbox click
+- **Drag & drop reorder** — synced via Google Tasks API
+- **Auto-updates** — Sparkle 2.9.2, "Check for Updates" in Settings
 - **Auto-refresh** configurable (5/15/30 min)
 - **Draft persistence** — draft survives closing the app
 - Desktop widget small and medium (WidgetKit)
-- Sign in with Google OAuth 2.0 — tokens stored locally in Keychain
+- Sign in with Google OAuth 2.0 — tokens stored in Keychain
 
 ## How login works
 

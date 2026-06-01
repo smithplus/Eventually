@@ -74,13 +74,17 @@ Critical refinements before starting Linear integration:
 - [ ] **Notifications** — reminder when a task is due today or overdue
 - [ ] **Error handling UX** — what happens without internet, sync failures, offline mode
 - [ ] **Performance polish** — lazy loading, smooth scrolling with many (100+) tasks
-- [x] **Keyboard navigation refinement** — 12 conflicts resolved in build 3 audit ✅
+- [x] **Keyboard navigation refinement** — cursor nav removed, zero conflicts ✅
 
 ### P1 — High priority
-- [x] **Drag & drop reorder** — reorder tasks within a list ✅ build 4
-- [x] **Clickable URLs in notes** — auto-detected, clickable in collapsed and expanded view ✅ build 4
-- [x] **Better description input** — monospaced editor + markdown format toolbar (B/I/~~/ - /#) + preview toggle ✅ build 4
-- [x] **Auto-updates (Sparkle)** — integrated Sparkle 2.9.2, "Check for Updates" in Settings ✅ build 4
+- [x] **Drag & drop reorder** ✅ build 4
+- [x] **Clickable URLs in notes** ✅ build 4
+- [x] **Better description input** — Notion-style clean editor ✅ build 4
+- [x] **Auto-updates (Sparkle)** — integrated Sparkle 2.9.2 ✅ build 4
+- [x] **Full row tappable to expand** — no more "click the title" friction ✅
+- [x] **Keyboard nav conflicts resolved** — removed cursor nav, zero input interference ✅
+- [x] **UX audit** — 9 improvements (confirmations, hints, date picker, sort indicator) ✅
+- [x] **Visual polish** — Linear + Raycast-inspired design system ✅ build 7
 
 ### P2 — Nice to have
 - [ ] **Functional widget** — currently a placeholder; needs App Group + real cache

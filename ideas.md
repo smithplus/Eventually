@@ -79,6 +79,14 @@ Feasibility legend:
 - ✅ Reliability audit (9 critical bugs fixed)
 - ✅ Text editing UX fix (Space/Enter respect active text fields)
 - ✅ Comprehensive UX audit — 12 keyboard/focus/state conflicts resolved (build 3)
+- ✅ Clickable URLs in notes, better description input, drag & drop reorder, Sparkle auto-updates (build 4)
+- ✅ Code review audit — 11 confirmed bugs fixed across builds 5 & 6
+- ✅ Tap anywhere on row to expand/edit — full row is tappable
+- ✅ Removed cursor keyboard navigation — no more input conflicts
+- ✅ UX audit fixes — 9 improvements (Done ⌘↵ hint, date picker consistency, confirmations, sort indicator…)
+- ✅ Visual polish — Linear-inspired design system (badge radius, group headers, letter-spacing, metadata hierarchy)
+- ✅ Raycast-sibling aesthetic — input 18px regular, no row dividers, compact density, ultraThickMaterial panel
+- ✅ Fix: isLoading stuck forever when token refresh fails
 - ✅ Clickable URLs in notes (auto-detected, build 4)
 - ✅ Better description input — monospaced editor + format toolbar + preview toggle (build 4)
 - ✅ Drag & drop reorder — tasks reorder via Google Tasks API (build 4)
