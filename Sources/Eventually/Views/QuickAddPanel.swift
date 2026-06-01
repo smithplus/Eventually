@@ -55,6 +55,9 @@ struct QuickAddPanel: View {
     @State private var showBulkDatePicker = false
     @State private var bulkDate = Date()
 
+    // Track when any task row is being edited (to prevent keyboard shortcuts from interfering)
+    @State private var isAnyTaskBeingEdited = false
+
     /// The flat sequence of task rows currently visible (respects grouping and
     /// collapsed sections) — the order keyboard navigation walks.
     /// ONLY includes active (incomplete) tasks for navigation purposes.
@@ -736,6 +739,7 @@ struct QuickAddPanel: View {
             .focusable()
             .focused($listFocused)
             .modifier(ListNavKeyHandler(
+                isAnyTaskBeingEdited: isAnyTaskBeingEdited,
                 onUp: { cursorIndex = max(0, cursorIndex - 1) },
                 onDown: { cursorIndex = min(visibleRows.count - 1, cursorIndex + 1) },
                 onToggleSelect: { if let t = cursorTask { toggleSelection(t.id) } },
@@ -764,7 +768,8 @@ struct QuickAddPanel: View {
                         .transition(.scale.combined(with: .opacity))
                 }
                 TaskRowView(task: ordered.task, isChild: ordered.isChild,
-                           showListBadge: showListBadge, showDateBadge: showDateBadge)
+                           showListBadge: showListBadge, showDateBadge: showDateBadge,
+                           isBeingEdited: $isAnyTaskBeingEdited)
             }
             Divider().padding(.leading, ordered.isChild ? 64 : 40)
         }
@@ -1269,6 +1274,7 @@ private struct CommandKeyHandler: ViewModifier {
 /// ↑/↓ move the cursor, Space toggles selection, Return completes, Delete
 /// removes, E expands for edit, ⌘A selects all, Esc/Tab returns to the input.
 private struct ListNavKeyHandler: ViewModifier {
+    let isAnyTaskBeingEdited: Bool
     let onUp: () -> Void
     let onDown: () -> Void
     let onToggleSelect: () -> Void
@@ -1284,10 +1290,9 @@ private struct ListNavKeyHandler: ViewModifier {
                 switch press.key {
                 case .upArrow:   onUp(); return .handled
                 case .downArrow: onDown(); return .handled
-                case .space:     onToggleSelect(); return .handled
                 case .return:
-                    // Return with selection → complete
-                    // Return without selection → edit
+                    // Don't complete task if any task is being edited
+                    if isAnyTaskBeingEdited { return .ignored }
                     onComplete()
                     return .handled
                 case .delete, .deleteForward: onDelete(); return .handled

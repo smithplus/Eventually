@@ -53,9 +53,9 @@ En Xcode: seleccionar signing team → `Cmd+R`
 | `Tab` (en input) | Ir al list/date autocomplete (↑/↓ navegan, Enter acepta) |
 | `Tab` (sin autocomplete) | Foco a la lista de tareas |
 | `↑/↓` (en lista) | Navegar cursor |
-| `Espacio` | Toggle selección |
-| `Return` | Completar seleccionadas |
-| `Delete` | Borrar seleccionadas |
+| `⌘+Click` | Toggle selección individual |
+| `Return` | Completar tareas seleccionadas |
+| `Delete` | Borrar tareas seleccionadas |
 | `⌘A` | Seleccionar todas visibles |
 | `Esc` / `Tab` | Volver al input |
 

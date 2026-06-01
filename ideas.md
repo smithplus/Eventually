@@ -77,3 +77,4 @@ Leyenda de viabilidad:
 - ✅ Clear completed bulk action
 - ✅ Keyboard edit shortcut ('E' key)
 - ✅ Reliability audit completo (9 critical bugs fixed)
+- ✅ Text editing UX fix (Space/Enter respetan campos de texto activos)

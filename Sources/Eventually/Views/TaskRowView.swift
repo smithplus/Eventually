@@ -6,6 +6,7 @@ struct TaskRowView: View {
     var isChild: Bool = false
     var showListBadge: Bool = false
     var showDateBadge: Bool = true
+    @Binding var isBeingEdited: Bool
 
     @State private var isExpanded = false
     @State private var editTitle = ""
@@ -369,6 +370,7 @@ struct TaskRowView: View {
         editingNotes = false   // show rendered markdown first; tap to edit
         withAnimation(.easeOut(duration: 0.15)) { isExpanded = true }
         isEditFocused = true
+        isBeingEdited = true
     }
 
     private func startEditingNotes() {
@@ -380,6 +382,7 @@ struct TaskRowView: View {
         let title = editTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         let notes = editNotes.trimmingCharacters(in: .whitespacesAndNewlines)
         withAnimation(.easeOut(duration: 0.15)) { isExpanded = false }
+        isBeingEdited = false
 
         let titleChanged = title != task.title && !title.isEmpty
         let notesChanged = notes != (task.notes ?? "")
