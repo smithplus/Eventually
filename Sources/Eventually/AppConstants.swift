@@ -19,6 +19,8 @@ enum DefaultsKey {
     static let listOrder = "listOrder"
     static let sortOrder = "sortOrder"
     static let showMenuBarIcon = "showMenuBarIcon"
+    static let showCompletedTasks = "showCompletedTasks"
+    static let completedSectionCollapsed = "completedSectionCollapsed"
 }
 
 /// App appearance preference, shared by the Settings picker and the applier.

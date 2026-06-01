@@ -46,6 +46,7 @@ struct QuickAddPanel: View {
     @State private var newListText = ""
     @State private var collapsedGroups: Set<String> = []
     @State private var suggestionIndex = 0
+    @State private var completedCollapsed: Bool = UserDefaults.standard.bool(forKey: DefaultsKey.completedSectionCollapsed)
 
     // Keyboard navigation of the task list + multi-select.
     @FocusState private var listFocused: Bool
@@ -56,17 +57,18 @@ struct QuickAddPanel: View {
 
     /// The flat sequence of task rows currently visible (respects grouping and
     /// collapsed sections) — the order keyboard navigation walks.
+    /// ONLY includes active (incomplete) tasks for navigation purposes.
     private var visibleRows: [GoogleTasksService.OrderedTask] {
         if isGroupedByDate {
-            return tasksService.groupedByDate(displayRows).flatMap {
+            return tasksService.groupedByDate(activeTasks).flatMap {
                 collapsedGroups.contains("date:" + $0.key) ? [] : $0.rows
             }
         } else if isGroupedByList {
-            return tasksService.grouped(displayRows).flatMap {
+            return tasksService.grouped(activeTasks).flatMap {
                 collapsedGroups.contains($0.listId) ? [] : $0.rows
             }
         }
-        return displayRows
+        return activeTasks
     }
 
     /// Tasks currently selected AND visible (selection is pruned on view change).
@@ -109,6 +111,16 @@ struct QuickAddPanel: View {
             return tasksService.search(q)
         }
         return tasksService.rows(for: panelFilter)
+    }
+
+    /// Active (incomplete) tasks from displayRows
+    private var activeTasks: [GoogleTasksService.OrderedTask] {
+        displayRows.filter { !$0.task.isCompleted }
+    }
+
+    /// Completed tasks from displayRows
+    private var completedTasks: [GoogleTasksService.OrderedTask] {
+        displayRows.filter { $0.task.isCompleted }
     }
 
     // MARK: - Default / last-used view
@@ -676,30 +688,44 @@ struct QuickAddPanel: View {
         } else {
             ScrollView {
                 LazyVStack(spacing: 0) {
+                    // Active tasks section
                     if isGroupedByDate {
-                        ForEach(tasksService.groupedByDate(displayRows)) { group in
+                        ForEach(tasksService.groupedByDate(activeTasks)) { group in
                             groupHeader(title: group.title, color: dateGroupColor(group.key),
                                         count: group.rows.count, key: "date:" + group.key)
                             if !collapsedGroups.contains("date:" + group.key) {
                                 // Grouped by date: show only list badge (date is in the header)
-                                ForEach(group.rows) { taskRow($0, showListBadge: panelFilter.isSmart || showSearch, showDateBadge: false) }
+                                ForEach(group.rows) { taskRow($0, showListBadge: panelFilter.isSmart || showSearch, showDateBadge: false)
+                                    .id(group.rows.first?.task.id ?? "" + $0.task.id)
+                                }
                             }
                         }
                     } else if isGroupedByList {
-                        ForEach(tasksService.grouped(displayRows)) { group in
+                        ForEach(tasksService.grouped(activeTasks)) { group in
                             groupHeader(title: group.title, color: tasksService.listColor(for: group.listId),
                                         count: group.rows.count, key: group.listId,
                                         list: tasksService.taskLists.first { $0.id == group.listId })
                             if !collapsedGroups.contains(group.listId) {
                                 // Grouped by list: show only date badge (list is in the header)
-                                ForEach(group.rows) { taskRow($0, showListBadge: false, showDateBadge: true) }
+                                ForEach(group.rows) { taskRow($0, showListBadge: false, showDateBadge: true)
+                                    .id(group.listId + $0.task.id)
+                                }
                             }
                         }
                     } else {
                         // No grouping: show both badges
-                        ForEach(displayRows) { taskRow($0, showListBadge: panelFilter.isSmart || showSearch, showDateBadge: true) }
+                        ForEach(activeTasks) { taskRow($0, showListBadge: panelFilter.isSmart || showSearch, showDateBadge: true)
+                            .id($0.task.id)
+                        }
+                    }
+
+                    // Completed tasks section
+                    if !completedTasks.isEmpty {
+                        completedSection
                     }
                 }
+                .animation(.easeInOut(duration: 0.25), value: activeTasks.count)
+                .animation(.easeInOut(duration: 0.25), value: completedTasks.count)
                 .padding(.bottom, Theme.spaceS)
             }
             .frame(maxHeight: .infinity)
@@ -727,6 +753,7 @@ struct QuickAddPanel: View {
                         .font(.system(size: 12))
                         .foregroundStyle(Theme.accent)
                         .padding(.leading, Theme.spaceS)
+                        .transition(.scale.combined(with: .opacity))
                 }
                 TaskRowView(task: ordered.task, isChild: ordered.isChild,
                            showListBadge: showListBadge, showDateBadge: showDateBadge)
@@ -735,6 +762,9 @@ struct QuickAddPanel: View {
         }
         .background(isCursor ? Theme.accent.opacity(0.18)
                     : isSelected ? Theme.accent.opacity(0.08) : Color.clear)
+        .animation(.easeInOut(duration: 0.2), value: isCursor)
+        .animation(.easeInOut(duration: 0.2), value: isSelected)
+        .transition(.opacity.combined(with: .move(edge: .top)))
         .simultaneousGesture(TapGesture().modifiers(.command).onEnded {
             toggleSelection(ordered.task.id)
         })
@@ -778,6 +808,52 @@ struct QuickAddPanel: View {
         .contextMenu {
             if let list { listMenu(list) }
         }
+    }
+
+    /// Completed tasks section (collapsible, TickTick-style)
+    private var completedSection: some View {
+        VStack(spacing: 0) {
+            // Completed header
+            Button {
+                completedCollapsed.toggle()
+                UserDefaults.standard.set(completedCollapsed, forKey: DefaultsKey.completedSectionCollapsed)
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: completedCollapsed ? "chevron.right" : "chevron.down")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 10)
+
+                    HStack(spacing: 6) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.green)
+                        Text("Completed")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                        Text("\(completedTasks.count)")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Color.green.opacity(0.08))
+                    .clipShape(Capsule())
+
+                    Spacer()
+                }
+                .padding(.horizontal, Theme.spaceM)
+                .padding(.top, Theme.spaceM)
+                .padding(.bottom, Theme.spaceXS)
+            }
+            .buttonStyle(.plain)
+
+            // Completed tasks (hidden when collapsed)
+            if !completedCollapsed {
+                ForEach(completedTasks) { taskRow($0, showListBadge: panelFilter.isSmart || showSearch, showDateBadge: true) }
+            }
+        }
+        .transition(.opacity.combined(with: .move(edge: .top)))
     }
 
     /// Semantic color for a date bucket.
